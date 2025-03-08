@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>會員 - 健康管理APP</title>
+    <!-- Tailwind CSS CDN -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome CDN -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- 自定義樣式 -->
+    <link rel="stylesheet" href="../css/styles.css" />
+    <style>
+      body {
+        background-color: var(--background-color);
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .profile-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 16px;
+        overflow-y: auto;
+      }
+
+      .profile-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+
+      .profile-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 40px;
+        margin-bottom: 16px;
+        position: relative;
+      }
+
+      .edit-avatar {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: var(--card-background);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-color);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border: 2px solid white;
+      }
+
+      .profile-stats {
+        display: flex;
+        justify-content: space-around;
+        margin-bottom: 24px;
+      }
+
+      .stat-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .stat-value {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 4px;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        color: var(--light-text-color);
+      }
+
+      .profile-section {
+        background-color: var(--card-background);
+        border-radius: 16px;
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+
+      .section-title {
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+      }
+
+      .section-icon {
+        margin-right: 8px;
+        color: var(--primary-color);
+      }
+
+      .info-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .info-item:last-child {
+        border-bottom: none;
+      }
+
+      .info-label {
+        color: var(--light-text-color);
+      }
+
+      .info-value {
+        font-weight: 500;
+      }
+
+      .menu-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .menu-item:last-child {
+        border-bottom: none;
+      }
+
+      .menu-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background-color: var(--background-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        color: var(--primary-color);
+      }
+
+      .menu-arrow {
+        color: var(--light-text-color);
+      }
+
+      .logout-button {
+        margin-top: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="profile-container">
+      <div class="profile-header">
+        <div class="profile-avatar">
+          <i class="fas fa-user"></i>
+          <div class="edit-avatar">
+            <i class="fas fa-camera"></i>
+          </div>
+        </div>
+        <h2 class="text-xl font-bold">健康達人</h2>
+        <p class="text-sm text-gray-500">減重目標進行中</p>
+      </div>
+
+      <div class="profile-stats">
+        <div class="stat-item">
+          <div class="stat-value">175</div>
+          <div class="stat-label">身高 (cm)</div>
+        </div>
+
+        <div class="stat-item">
+          <div class="stat-value">70</div>
+          <div class="stat-label">體重 (kg)</div>
+        </div>
+
+        <div class="stat-item">
+          <div class="stat-value">65</div>
+          <div class="stat-label">目標 (kg)</div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <div class="section-header">
+          <div class="section-title">
+            <i class="fas fa-user section-icon"></i>
+            <span>個人資料</span>
+          </div>
+          <button
+            class="text-primary-color"
+            onclick="navigateTo('edit-profile')"
+          >
+            <i class="fas fa-pen"></i>
+          </button>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">暱稱</div>
+          <div class="info-value">健康達人</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">性別</div>
+          <div class="info-value">男</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">健康管理目的</div>
+          <div class="info-value">減重</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">理想體重</div>
+          <div class="info-value">65 kg</div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">達成時間</div>
+          <div class="info-value">2023/12/31</div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <div class="section-header">
+          <div class="section-title">
+            <i class="fas fa-cog section-icon"></i>
+            <span>設置</span>
+          </div>
+        </div>
+
+        <a href="settings.html" class="menu-item">
+          <div class="menu-icon">
+            <i class="fas fa-moon"></i>
+          </div>
+          <div class="flex-1">
+            <div>深色模式</div>
+            <div class="text-xs text-gray-500">調整應用外觀</div>
+          </div>
+          <i class="fas fa-chevron-right menu-arrow"></i>
+        </a>
+
+        <a href="settings.html" class="menu-item">
+          <div class="menu-icon">
+            <i class="fas fa-font"></i>
+          </div>
+          <div class="flex-1">
+            <div>字體大小</div>
+            <div class="text-xs text-gray-500">調整文字顯示大小</div>
+          </div>
+          <i class="fas fa-chevron-right menu-arrow"></i>
+        </a>
+
+        <a href="settings.html" class="menu-item">
+          <div class="menu-icon">
+            <i class="fas fa-bell"></i>
+          </div>
+          <div class="flex-1">
+            <div>通知設置</div>
+            <div class="text-xs text-gray-500">管理應用通知</div>
+          </div>
+          <i class="fas fa-chevron-right menu-arrow"></i>
+        </a>
+      </div>
+
+      <div class="profile-section">
+        <div class="section-header">
+          <div class="section-title">
+            <i class="fas fa-info-circle section-icon"></i>
+            <span>關於</span>
+          </div>
+        </div>
+
+        <a href="#" class="menu-item">
+          <div class="menu-icon">
+            <i class="fas fa-star"></i>
+          </div>
+          <div class="flex-1">
+            <div>評分應用</div>
+            <div class="text-xs text-gray-500">在應用商店給我們評分</div>
+          </div>
+          <i class="fas fa-chevron-right menu-arrow"></i>
+        </a>
+
+        <a href="#" class="menu-item">
+          <div class="menu-icon">
+            <i class="fas fa-question-circle"></i>
+          </div>
+          <div class="flex-1">
+            <div>幫助與反饋</div>
+            <div class="text-xs text-gray-500">獲取幫助或提供反饋</div>
+          </div>
+          <i class="fas fa-chevron-right menu-arrow"></i>
+        </a>
+
+        <a href="#" class="menu-item">
+          <div class="menu-icon">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+          <div class="flex-1">
+            <div>隱私政策</div>
+            <div class="text-xs text-gray-500">了解我們如何保護您的數據</div>
+          </div>
+          <i class="fas fa-chevron-right menu-arrow"></i>
+        </a>
+      </div>
+
+      <button
+        class="btn btn-danger btn-block logout-button"
+        onclick="logoutUser()"
+      >
+        <i class="fas fa-sign-out-alt mr-2"></i> 登出
+      </button>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="../js/main.js"></script>
+  </body>
+</html>

@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>社群 - 健康管理APP</title>
+    <!-- Tailwind CSS CDN -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome CDN -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- 自定義樣式 -->
+    <link rel="stylesheet" href="../css/styles.css" />
+    <style>
+      body {
+        background-color: var(--background-color);
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .social-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 16px;
+        overflow-y: auto;
+      }
+
+      .social-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .tab-buttons {
+        display: flex;
+        background-color: var(--card-background);
+        border-radius: 20px;
+        padding: 4px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .tab-button {
+        flex: 1;
+        text-align: center;
+        padding: 8px 0;
+        border-radius: 16px;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .tab-button.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .create-group-button {
+        background-color: var(--primary-color);
+        color: white;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .group-card {
+        background-color: var(--card-background);
+        border-radius: 16px;
+        padding: 16px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .group-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+
+      .group-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        background-color: var(--primary-color);
+        margin-right: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 24px;
+      }
+
+      .group-members {
+        display: flex;
+        margin-top: 12px;
+      }
+
+      .member-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background-color: #f0f0f0;
+        margin-right: -8px;
+        border: 2px solid var(--card-background);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        color: var(--light-text-color);
+      }
+
+      .member-avatar:last-child {
+        margin-right: 8px;
+      }
+
+      .member-count {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        color: var(--light-text-color);
+      }
+
+      .achievement-section {
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border-color);
+      }
+
+      .achievement-title {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+
+      .achievement-progress {
+        display: flex;
+        align-items: center;
+      }
+
+      .achievement-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 8px;
+        color: white;
+        font-size: 12px;
+      }
+
+      .friend-card {
+        display: flex;
+        align-items: center;
+        background-color: var(--card-background);
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .friend-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: #f0f0f0;
+        margin-right: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--light-text-color);
+      }
+
+      .friend-details {
+        flex: 1;
+      }
+
+      .friend-action {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .invite-card {
+        background-color: var(--card-background);
+        border-radius: 16px;
+        padding: 16px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .invite-methods {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 16px;
+      }
+
+      .invite-method {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 70px;
+      }
+
+      .invite-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 8px;
+        font-size: 24px;
+      }
+
+      .whatsapp-icon {
+        background-color: #25d366;
+        color: white;
+      }
+
+      .line-icon {
+        background-color: #00b900;
+        color: white;
+      }
+
+      .facebook-icon {
+        background-color: #1877f2;
+        color: white;
+      }
+
+      .email-icon {
+        background-color: #ea4335;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="social-container">
+      <div class="social-header">
+        <h2 class="text-xl font-bold">社群</h2>
+        <button class="create-group-button" onclick="showCreateGroupModal()">
+          <i class="fas fa-plus"></i>
+        </button>
+      </div>
+
+      <div class="tab-buttons">
+        <button class="tab-button active" onclick="showTab('groups')">
+          我的群組
+        </button>
+        <button class="tab-button" onclick="showTab('friends')">好友</button>
+        <button class="tab-button" onclick="showTab('invite')">邀請</button>
+      </div>
+
+      <!-- 群組標籤 -->
+      <div id="groups-tab">
+        <div class="group-card">
+          <div class="group-header">
+            <div class="group-avatar">
+              <i class="fas fa-users"></i>
+            </div>
+            <div>
+              <h3 class="font-bold">健康生活小組</h3>
+              <p class="text-sm text-gray-500">5 位成員</p>
+            </div>
+          </div>
+
+          <div class="flex justify-between items-center">
+            <div class="group-members">
+              <div
+                class="member-avatar"
+                style="background-color: #4a90e2; color: white"
+              >
+                J
+              </div>
+              <div
+                class="member-avatar"
+                style="background-color: #50c878; color: white"
+              >
+                M
+              </div>
+              <div
+                class="member-avatar"
+                style="background-color: #f39c12; color: white"
+              >
+                L
+              </div>
+              <div
+                class="member-avatar"
+                style="background-color: #e74c3c; color: white"
+              >
+                K
+              </div>
+              <div
+                class="member-avatar"
+                style="background-color: #9b59b6; color: white"
+              >
+                S
+              </div>
+            </div>
+
+            <button class="text-sm text-primary-color">查看詳情</button>
+          </div>
+
+          <div class="achievement-section">
+            <div class="achievement-title">
+              <h4 class="text-sm font-medium">群組目標</h4>
+              <span class="text-xs text-primary-color">5/7 天</span>
+            </div>
+
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 71%"></div>
+            </div>
+
+            <div class="flex justify-between mt-2">
+              <div class="achievement-progress">
+                <div class="achievement-icon">
+                  <i class="fas fa-trophy"></i>
+                </div>
+                <span class="text-xs">連續達標 3 天</span>
+              </div>
+
+              <span class="text-xs text-success-color">+5 積分</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="group-card">
+          <div class="group-header">
+            <div class="group-avatar" style="background-color: #f39c12">
+              <i class="fas fa-running"></i>
+            </div>
+            <div>
+              <h3 class="font-bold">減重挑戰團</h3>
+              <p class="text-sm text-gray-500">3 位成員</p>
+            </div>
+          </div>
+
+          <div class="flex justify-between items-center">
+            <div class="group-members">
+              <div
+                class="member-avatar"
+                style="background-color: #4a90e2; color: white"
+              >
+                J
+              </div>
+              <div
+                class="member-avatar"
+                style="background-color: #50c878; color: white"
+              >
+                M
+              </div>
+              <div
+                class="member-avatar"
+                style="background-color: #e74c3c; color: white"
+              >
+                K
+              </div>
+            </div>
+
+            <button class="text-sm text-primary-color">查看詳情</button>
+          </div>
+
+          <div class="achievement-section">
+            <div class="achievement-title">
+              <h4 class="text-sm font-medium">群組目標</h4>
+              <span class="text-xs text-primary-color">2/7 天</span>
+            </div>
+
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 28%"></div>
+            </div>
+
+            <div class="flex justify-between mt-2">
+              <div class="achievement-progress">
+                <div class="achievement-icon">
+                  <i class="fas fa-trophy"></i>
+                </div>
+                <span class="text-xs">連續達標 1 天</span>
+              </div>
+
+              <span class="text-xs text-success-color">+2 積分</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 好友標籤 -->
+      <div id="friends-tab" style="display: none">
+        <div class="friend-card">
+          <div
+            class="friend-avatar"
+            style="background-color: #4a90e2; color: white"
+          >
+            J
+          </div>
+          <div class="friend-details">
+            <div class="flex justify-between">
+              <h3 class="font-medium">健康小子</h3>
+              <span class="text-xs text-success-color">在線</span>
+            </div>
+            <div class="flex items-center mt-1">
+              <div class="w-2 h-2 rounded-full bg-success-color mr-1"></div>
+              <span class="text-xs text-gray-500">連續達標 5 天</span>
+            </div>
+          </div>
+          <button class="friend-action">
+            <i class="fas fa-comment-alt"></i>
+          </button>
+        </div>
+
+        <div class="friend-card">
+          <div
+            class="friend-avatar"
+            style="background-color: #50c878; color: white"
+          >
+            M
+          </div>
+          <div class="friend-details">
+            <div class="flex justify-between">
+              <h3 class="font-medium">營養師瑪莉</h3>
+              <span class="text-xs text-gray-500">3小時前</span>
+            </div>
+            <div class="flex items-center mt-1">
+              <div class="w-2 h-2 rounded-full bg-warning-color mr-1"></div>
+              <span class="text-xs text-gray-500">連續達標 2 天</span>
+            </div>
+          </div>
+          <button class="friend-action">
+            <i class="fas fa-comment-alt"></i>
+          </button>
+        </div>
+
+        <div class="friend-card">
+          <div
+            class="friend-avatar"
+            style="background-color: #f39c12; color: white"
+          >
+            L
+          </div>
+          <div class="friend-details">
+            <div class="flex justify-between">
+              <h3 class="font-medium">跑步達人</h3>
+              <span class="text-xs text-gray-500">1天前</span>
+            </div>
+            <div class="flex items-center mt-1">
+              <div class="w-2 h-2 rounded-full bg-danger-color mr-1"></div>
+              <span class="text-xs text-gray-500">連續達標 0 天</span>
+            </div>
+          </div>
+          <button class="friend-action">
+            <i class="fas fa-comment-alt"></i>
+          </button>
+        </div>
+
+        <button class="btn btn-primary btn-block mt-4">
+          <i class="fas fa-user-plus mr-2"></i> 添加好友
+        </button>
+      </div>
+
+      <!-- 邀請標籤 -->
+      <div id="invite-tab" style="display: none">
+        <div class="invite-card">
+          <h3 class="text-lg font-bold">邀請好友</h3>
+          <p class="text-sm text-gray-500 mt-2">邀請好友一起加入健康管理之旅</p>
+
+          <div class="invite-methods">
+            <div class="invite-method">
+              <div class="invite-icon whatsapp-icon">
+                <i class="fab fa-whatsapp"></i>
+              </div>
+              <span class="text-xs">WhatsApp</span>
+            </div>
+
+            <div class="invite-method">
+              <div class="invite-icon line-icon">
+                <i class="fab fa-line"></i>
+              </div>
+              <span class="text-xs">Line</span>
+            </div>
+
+            <div class="invite-method">
+              <div class="invite-icon facebook-icon">
+                <i class="fab fa-facebook-f"></i>
+              </div>
+              <span class="text-xs">Facebook</span>
+            </div>
+
+            <div class="invite-method">
+              <div class="invite-icon email-icon">
+                <i class="fas fa-envelope"></i>
+              </div>
+              <span class="text-xs">Email</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="invite-card">
+          <h3 class="text-lg font-bold">分享邀請碼</h3>
+          <p class="text-sm text-gray-500 mt-2">
+            好友輸入您的邀請碼可獲得額外獎勵
+          </p>
+
+          <div
+            class="flex items-center justify-between mt-4 bg-gray-100 rounded-lg p-3"
+          >
+            <span class="font-bold tracking-wider">HEALTH2023</span>
+            <button class="text-primary-color">
+              <i class="fas fa-copy"></i>
+            </button>
+          </div>
+
+          <div class="text-center mt-4">
+            <span class="text-xs text-gray-500">已邀請 3 位好友</span>
+            <div class="progress-bar mt-2">
+              <div class="progress-fill" style="width: 30%"></div>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">
+              邀請 10 位好友可獲得 VIP 會員 1 個月
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+      function showTab(tabName) {
+        // 隱藏所有標籤內容
+        document.getElementById("groups-tab").style.display = "none";
+        document.getElementById("friends-tab").style.display = "none";
+        document.getElementById("invite-tab").style.display = "none";
+
+        // 顯示選擇的標籤內容
+        document.getElementById(`${tabName}-tab`).style.display = "block";
+
+        // 更新標籤按鈕狀態
+        const tabButtons = document.querySelectorAll(".tab-button");
+        tabButtons.forEach((button) => {
+          button.classList.remove("active");
+        });
+
+        // 根據選擇的標籤激活相應的按鈕
+        const activeIndex =
+          tabName === "groups" ? 0 : tabName === "friends" ? 1 : 2;
+        tabButtons[activeIndex].classList.add("active");
+      }
+
+      function showCreateGroupModal() {
+        // 在實際應用中，這裡會顯示創建群組的模態框
+        console.log("顯示創建群組模態框");
+      }
+    </script>
+  </body>
+</html>

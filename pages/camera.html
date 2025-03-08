@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>拍照 - 健康管理APP</title>
+    <!-- Tailwind CSS CDN -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome CDN -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- 自定義樣式 -->
+    <link rel="stylesheet" href="../css/styles.css" />
+    <style>
+      body {
+        background-color: var(--background-color);
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .camera-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 16px;
+        overflow-y: auto;
+      }
+
+      .camera-header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .camera-preview {
+        position: relative;
+      }
+
+      .camera-controls {
+        position: absolute;
+        bottom: 20px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+      }
+
+      .camera-button {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      .camera-button-inner {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 2px solid #ccc;
+      }
+
+      .photo-confirm-buttons {
+        display: none;
+        justify-content: space-between;
+        margin-top: 16px;
+      }
+
+      .food-analysis-result {
+        display: none;
+        margin-top: 20px;
+      }
+
+      .input-food-form {
+        display: none;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="camera-container">
+      <div class="camera-header">
+        <h2 class="text-xl font-bold">記錄您的食物</h2>
+        <p class="text-sm text-gray-500">拍照、上傳或手動輸入</p>
+      </div>
+
+      <div class="camera-options">
+        <div class="camera-option" onclick="showCameraView()">
+          <i class="fas fa-camera text-2xl text-primary-color mb-2"></i>
+          <span class="text-sm">拍照</span>
+        </div>
+
+        <div class="camera-option" onclick="showUploadView()">
+          <i class="fas fa-upload text-2xl text-primary-color mb-2"></i>
+          <span class="text-sm">上傳</span>
+        </div>
+
+        <div class="camera-option" onclick="showInputView()">
+          <i class="fas fa-keyboard text-2xl text-primary-color mb-2"></i>
+          <span class="text-sm">輸入</span>
+        </div>
+      </div>
+
+      <!-- 拍照視圖 -->
+      <div id="camera-view">
+        <div class="camera-preview">
+          <div
+            class="w-full h-300px bg-black rounded-lg flex items-center justify-center text-white"
+          >
+            <i class="fas fa-camera text-4xl"></i>
+          </div>
+          <div class="camera-controls">
+            <div class="camera-button" onclick="takePhoto()">
+              <div class="camera-button-inner"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="photo-confirm-buttons">
+          <button class="btn btn-danger" onclick="retakePhoto()">
+            <i class="fas fa-redo mr-2"></i> 重拍
+          </button>
+          <button class="btn btn-primary" onclick="confirmFoodPhoto()">
+            <i class="fas fa-check mr-2"></i> 確認
+          </button>
+        </div>
+      </div>
+
+      <!-- 上傳視圖 -->
+      <div id="upload-view" style="display: none">
+        <div class="stats-card">
+          <h3 class="text-lg font-bold mb-4">上傳食物照片</h3>
+
+          <div class="form-group">
+            <label class="form-label">選擇照片</label>
+            <div
+              class="flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer"
+              onclick="uploadPhoto()"
+            >
+              <div class="text-center">
+                <i
+                  class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"
+                ></i>
+                <p class="text-sm text-gray-500">點擊上傳照片</p>
+                <p class="text-xs text-gray-400 mt-1">支持 JPG, PNG 格式</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">用餐時間</label>
+            <select class="form-select">
+              <option value="breakfast">早餐</option>
+              <option value="lunch">午餐</option>
+              <option value="dinner">晚餐</option>
+              <option value="snack">點心</option>
+            </select>
+          </div>
+
+          <button class="btn btn-primary btn-block mt-4">
+            <i class="fas fa-check mr-2"></i> 確認上傳
+          </button>
+        </div>
+      </div>
+
+      <!-- 輸入視圖 -->
+      <div id="input-view" style="display: none">
+        <div class="stats-card">
+          <h3 class="text-lg font-bold mb-4">手動輸入食物</h3>
+
+          <div class="form-group">
+            <label class="form-label">食物名稱</label>
+            <input
+              type="text"
+              class="form-input"
+              placeholder="例如：沙拉、三明治"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">份量</label>
+            <div class="flex">
+              <input type="number" class="form-input" placeholder="數量" />
+              <select class="form-select ml-2">
+                <option value="g">克</option>
+                <option value="ml">毫升</option>
+                <option value="serving">份</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">用餐時間</label>
+            <select class="form-select">
+              <option value="breakfast">早餐</option>
+              <option value="lunch">午餐</option>
+              <option value="dinner">晚餐</option>
+              <option value="snack">點心</option>
+            </select>
+          </div>
+
+          <button class="btn btn-primary btn-block mt-4">
+            <i class="fas fa-check mr-2"></i> 確認添加
+          </button>
+        </div>
+      </div>
+
+      <!-- 食物分析結果 -->
+      <div class="food-analysis-result">
+        <!-- 這裡將由 JavaScript 填充內容 -->
+      </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="../js/main.js"></script>
+    <script>
+      // 顯示拍照視圖
+      function showCameraView() {
+        document.getElementById("camera-view").style.display = "block";
+        document.getElementById("upload-view").style.display = "none";
+        document.getElementById("input-view").style.display = "none";
+        document.querySelector(".food-analysis-result").style.display = "none";
+      }
+
+      // 顯示上傳視圖
+      function showUploadView() {
+        document.getElementById("camera-view").style.display = "none";
+        document.getElementById("upload-view").style.display = "block";
+        document.getElementById("input-view").style.display = "none";
+        document.querySelector(".food-analysis-result").style.display = "none";
+      }
+
+      // 顯示輸入視圖
+      function showInputView() {
+        document.getElementById("camera-view").style.display = "none";
+        document.getElementById("upload-view").style.display = "none";
+        document.getElementById("input-view").style.display = "block";
+        document.querySelector(".food-analysis-result").style.display = "none";
+      }
+
+      // 重拍照片
+      function retakePhoto() {
+        document.querySelector(".camera-preview").innerHTML = `
+        <div class="w-full h-300px bg-black rounded-lg flex items-center justify-center text-white">
+          <i class="fas fa-camera text-4xl"></i>
+        </div>
+        <div class="camera-controls">
+          <div class="camera-button" onclick="takePhoto()">
+            <div class="camera-button-inner"></div>
+          </div>
+        </div>
+      `;
+
+        document.querySelector(".photo-confirm-buttons").style.display = "none";
+      }
+    </script>
+  </body>
+</html>

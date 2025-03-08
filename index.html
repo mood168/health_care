@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>健康管理APP</title>
+    <!-- Tailwind CSS CDN -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome CDN -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- 自定義樣式 -->
+    <link rel="stylesheet" href="css/styles.css" />
+    <style>
+      body {
+        background-color: #f0f2f5;
+        padding: 20px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+      }
+
+      .prototype-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+      }
+
+      .prototype-item {
+        margin-bottom: 30px;
+      }
+
+      .prototype-label {
+        text-align: center;
+        font-weight: bold;
+        margin-bottom: 10px;
+        font-size: 16px;
+      }
+
+      /* 添加 iPhone 頂部凹槽 */
+      .notch {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 150px;
+        height: 30px;
+        background-color: #1a1a1a;
+        border-bottom-left-radius: 18px;
+        border-bottom-right-radius: 18px;
+        z-index: 10;
+      }
+
+      /* 色系選擇器樣式 */
+      .color-scheme-selector {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 1000;
+      }
+
+      .color-scheme-circle {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        transition: transform 0.2s;
+        border: 2px solid transparent;
+      }
+
+      .color-scheme-circle:hover {
+        transform: scale(1.1);
+      }
+
+      .color-scheme-circle.active {
+        border: 2px solid #000;
+      }
+
+      .color-scheme-1 {
+        background: linear-gradient(135deg, #ff7a3d, #ffb23d);
+      }
+
+      .color-scheme-2 {
+        background: linear-gradient(135deg, #ff5e7d, #ff8a5e);
+      }
+
+      .color-scheme-3 {
+        background: linear-gradient(135deg, #2196f3, #4db6ff);
+      }
+
+      .color-scheme-4 {
+        background: linear-gradient(135deg, #7ed957, #a0e878);
+      }
+
+      .color-scheme-5 {
+        background: linear-gradient(135deg, #6c5ce7, #8e7cf3);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 色系選擇器 -->
+    <div class="color-scheme-selector">
+      <div
+        class="color-scheme-circle color-scheme-1 active"
+        data-scheme="1"
+      ></div>
+      <div class="color-scheme-circle color-scheme-2" data-scheme="2"></div>
+      <div class="color-scheme-circle color-scheme-3" data-scheme="3"></div>
+      <div class="color-scheme-circle color-scheme-4" data-scheme="4"></div>
+      <div class="color-scheme-circle color-scheme-5" data-scheme="5"></div>
+    </div>
+
+    <div class="container mx-auto">
+      <h1 class="text-3xl font-bold text-center my-6">
+        健康管理APP - 高保真原型
+      </h1>
+
+      <div class="prototype-container">
+        <!-- 歡迎頁面 -->
+        <div class="prototype-item">
+          <div class="prototype-label">歡迎頁面</div>
+          <div class="app-container">
+            <div class="notch"></div>
+            <div class="status-bar">
+              <div>9:41</div>
+              <div>
+                <i class="fas fa-signal"></i>
+                <i class="fas fa-wifi ml-1"></i>
+                <i class="fas fa-battery-full ml-1"></i>
+              </div>
+            </div>
+            <iframe
+              src="pages/welcome.html"
+              frameborder="0"
+              width="100%"
+              height="768px"
+            ></iframe>
+          </div>
+        </div>
+
+        <!-- 登錄頁面 -->
+        <div class="prototype-item">
+          <div class="prototype-label">登錄頁面</div>
+          <div class="app-container">
+            <div class="notch"></div>
+            <div class="status-bar">
+              <div>9:41</div>
+              <div>
+                <i class="fas fa-signal"></i>
+                <i class="fas fa-wifi ml-1"></i>
+                <i class="fas fa-battery-full ml-1"></i>
+              </div>
+            </div>
+            <iframe
+              id="content-frame"
+              src="pages/login.html"
+              frameborder="0"
+              width="100%"
+              height="768px"
+            ></iframe>
+          </div>
+        </div>
+
+        <!-- 註冊頁面 -->
+        <div class="prototype-item">
+          <div class="prototype-label">註冊頁面</div>
+          <div class="app-container">
+            <div class="notch"></div>
+            <div class="status-bar">
+              <div>9:41</div>
+              <div>
+                <i class="fas fa-signal"></i>
+                <i class="fas fa-wifi ml-1"></i>
+                <i class="fas fa-battery-full ml-1"></i>
+              </div>
+            </div>
+            <iframe
+              src="pages/register.html"
+              frameborder="0"
+              width="100%"
+              height="768px"
+            ></iframe>
+          </div>
+        </div>
+
+        <!-- 首頁 -->
+        <div class="prototype-item">
+          <div class="prototype-label">首頁</div>
+          <div class="app-container">
+            <div class="notch"></div>
+            <div class="status-bar">
+              <div>9:41</div>
+              <div>
+                <i class="fas fa-signal"></i>
+                <i class="fas fa-wifi ml-1"></i>
+                <i class="fas fa-battery-full ml-1"></i>
+              </div>
+            </div>
+            <iframe
+              src="pages/home.html"
+              frameborder="0"
+              width="100%"
+              height="685px"
+            ></iframe>
+            <div class="tab-bar">
+              <div class="tab-item active" data-target="home">
+                <i class="fas fa-home tab-icon"></i>
+                <span>首頁</span>
+              </div>
+              <div class="tab-item" data-target="camera">
+                <i class="fas fa-camera tab-icon"></i>
+                <span>拍照</span>
+              </div>
+              <div class="tab-item" data-target="record">
+                <i class="fas fa-clipboard-list tab-icon"></i>
+                <span>紀錄</span>
+              </div>
+              <div class="tab-item" data-target="social">
+                <i class="fas fa-users tab-icon"></i>
+                <span>社群</span>
+              </div>
+              <div class="tab-item" data-target="profile">
+                <i class="fas fa-user tab-icon"></i>
+                <span>會員</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 拍照頁面 -->
+        <div class="prototype-item">
+          <div class="prototype-label">拍照頁面</div>
+          <div class="app-container">
+            <div class="notch"></div>
+            <div class="status-bar">
+              <div>9:41</div>
+              <div>
+                <i class="fas fa-signal"></i>
+                <i class="fas fa-wifi ml-1"></i>
+                <i class="fas fa-battery-full ml-1"></i>
+              </div>
+            </div>
+            <iframe
+              src="pages/camera.html"
+              frameborder="0"
+              width="100%"
+              height="685px"
+            ></iframe>
+            <div class="tab-bar">
+              <div class="tab-item" data-target="home">
+                <i class="fas fa-home tab-icon"></i>
+                <span>首頁</span>
+              </div>
+              <div class="tab-item active" data-target="camera">
+                <i class="fas fa-camera tab-icon"></i>
+                <span>拍照</span>
+              </div>
+              <div class="tab-item" data-target="record">
+                <i class="fas fa-clipboard-list tab-icon"></i>
+                <span>紀錄</span>
+              </div>
+              <div class="tab-item" data-target="social">
+                <i class="fas fa-users tab-icon"></i>
+                <span>社群</span>
+              </div>
+              <div class="tab-item" data-target="profile">
+                <i class="fas fa-user tab-icon"></i>
+                <span>會員</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 紀錄頁面 -->
+        <div class="prototype-item">
+          <div class="prototype-label">紀錄頁面</div>
+          <div class="app-container">
+            <div class="notch"></div>
+            <div class="status-bar">
+              <div>9:41</div>
+              <div>
+                <i class="fas fa-signal"></i>
+                <i class="fas fa-wifi ml-1"></i>
+                <i class="fas fa-battery-full ml-1"></i>
+              </div>
+            </div>
+            <iframe
+              src="pages/record.html"
+              frameborder="0"
+              width="100%"
+              height="685px"
+            ></iframe>
+            <div class="tab-bar">
+              <div class="tab-item" data-target="home">
+                <i class="fas fa-home tab-icon"></i>
+                <span>首頁</span>
+              </div>
+              <div class="tab-item" data-target="camera">
+                <i class="fas fa-camera tab-icon"></i>
+                <span>拍照</span>
+              </div>
+              <div class="tab-item active" data-target="record">
+                <i class="fas fa-clipboard-list tab-icon"></i>
+                <span>紀錄</span>
+              </div>
+              <div class="tab-item" data-target="social">
+                <i class="fas fa-users tab-icon"></i>
+                <span>社群</span>
+              </div>
+              <div class="tab-item" data-target="profile">
+                <i class="fas fa-user tab-icon"></i>
+                <span>會員</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 社群頁面 -->
+        <div class="prototype-item">
+          <div class="prototype-label">社群頁面</div>
+          <div class="app-container">
+            <div class="notch"></div>
+            <div class="status-bar">
+              <div>9:41</div>
+              <div>
+                <i class="fas fa-signal"></i>
+                <i class="fas fa-wifi ml-1"></i>
+                <i class="fas fa-battery-full ml-1"></i>
+              </div>
+            </div>
+            <iframe
+              src="pages/social.html"
+              frameborder="0"
+              width="100%"
+              height="685px"
+            ></iframe>
+            <div class="tab-bar">
+              <div class="tab-item" data-target="home">
+                <i class="fas fa-home tab-icon"></i>
+                <span>首頁</span>
+              </div>
+              <div class="tab-item" data-target="camera">
+                <i class="fas fa-camera tab-icon"></i>
+                <span>拍照</span>
+              </div>
+              <div class="tab-item" data-target="record">
+                <i class="fas fa-clipboard-list tab-icon"></i>
+                <span>紀錄</span>
+              </div>
+              <div class="tab-item active" data-target="social">
+                <i class="fas fa-users tab-icon"></i>
+                <span>社群</span>
+              </div>
+              <div class="tab-item" data-target="profile">
+                <i class="fas fa-user tab-icon"></i>
+                <span>會員</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 會員頁面 -->
+        <div class="prototype-item">
+          <div class="prototype-label">會員頁面</div>
+          <div class="app-container">
+            <div class="notch"></div>
+            <div class="status-bar">
+              <div>9:41</div>
+              <div>
+                <i class="fas fa-signal"></i>
+                <i class="fas fa-wifi ml-1"></i>
+                <i class="fas fa-battery-full ml-1"></i>
+              </div>
+            </div>
+            <iframe
+              src="pages/profile.html"
+              frameborder="0"
+              width="100%"
+              height="685px"
+            ></iframe>
+            <div class="tab-bar">
+              <div class="tab-item" data-target="home">
+                <i class="fas fa-home tab-icon"></i>
+                <span>首頁</span>
+              </div>
+              <div class="tab-item" data-target="camera">
+                <i class="fas fa-camera tab-icon"></i>
+                <span>拍照</span>
+              </div>
+              <div class="tab-item" data-target="record">
+                <i class="fas fa-clipboard-list tab-icon"></i>
+                <span>紀錄</span>
+              </div>
+              <div class="tab-item" data-target="social">
+                <i class="fas fa-users tab-icon"></i>
+                <span>社群</span>
+              </div>
+              <div class="tab-item active" data-target="profile">
+                <i class="fas fa-user tab-icon"></i>
+                <span>會員</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 設置頁面 -->
+        <div class="prototype-item">
+          <div class="prototype-label">設置頁面</div>
+          <div class="app-container">
+            <div class="notch"></div>
+            <div class="status-bar">
+              <div>9:41</div>
+              <div>
+                <i class="fas fa-signal"></i>
+                <i class="fas fa-wifi ml-1"></i>
+                <i class="fas fa-battery-full ml-1"></i>
+              </div>
+            </div>
+            <iframe
+              src="pages/settings.html"
+              frameborder="0"
+              width="100%"
+              height="685px"
+            ></iframe>
+            <div class="tab-bar">
+              <div class="tab-item" data-target="home">
+                <i class="fas fa-home tab-icon"></i>
+                <span>首頁</span>
+              </div>
+              <div class="tab-item" data-target="camera">
+                <i class="fas fa-camera tab-icon"></i>
+                <span>拍照</span>
+              </div>
+              <div class="tab-item" data-target="record">
+                <i class="fas fa-clipboard-list tab-icon"></i>
+                <span>紀錄</span>
+              </div>
+              <div class="tab-item" data-target="social">
+                <i class="fas fa-users tab-icon"></i>
+                <span>社群</span>
+              </div>
+              <div class="tab-item" data-target="profile">
+                <i class="fas fa-user tab-icon"></i>
+                <span>會員</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/main.js"></script>
+    <script src="js/color-scheme.js"></script>
+  </body>
+</html>

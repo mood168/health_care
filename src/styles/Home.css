@@ -1,0 +1,564 @@
+.home-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow-y: auto;
+  padding-top: 8px; /* 減少頂部間距，因為 StatusBar 已經提供了間距 */
+}
+
+.home-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.user-greeting {
+  display: flex;
+  align-items: center;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 12px;
+  background-color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.calendar-icon {
+  position: relative;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--card-background);
+  border-radius: 50%;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.calendar-icon:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.calendar-popup {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  width: 300px;
+  background-color: var(--card-background);
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  overflow: hidden;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.calendar-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.calendar-nav-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  border: none;
+  border-radius: 50%;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.calendar-nav-btn:hover {
+  background-color: var(--hover-color);
+}
+
+.calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.calendar-weekday {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 4px 0;
+}
+
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  padding: 8px;
+}
+
+.calendar-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  font-size: 14px;
+  color: var(--text-color);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.calendar-day:hover {
+  background-color: var(--hover-color);
+}
+
+.calendar-day.other-month {
+  color: var(--text-placeholder);
+}
+
+.calendar-day.today {
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: 600;
+}
+
+.calendar-day.selected:not(.today) {
+  background-color: rgba(var(--primary-color-rgb), 0.2);
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.calendar-footer {
+  display: flex;
+  justify-content: center;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.calendar-today-btn {
+  padding: 6px 12px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.calendar-today-btn:hover {
+  background-color: var(--primary-color-dark);
+}
+
+/* 深色模式適配 */
+.dark-mode .calendar-popup {
+  background-color: var(--dark-card-background);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .calendar-header,
+.dark-mode .calendar-weekdays,
+.dark-mode .calendar-footer {
+  border-color: var(--dark-border-color);
+}
+
+.dark-mode .calendar-title,
+.dark-mode .calendar-nav-btn,
+.dark-mode .calendar-day {
+  color: var(--dark-text-color);
+}
+
+.dark-mode .calendar-weekday {
+  color: var(--dark-text-secondary);
+}
+
+.dark-mode .calendar-day.other-month {
+  color: var(--dark-text-placeholder);
+}
+
+.dark-mode .calendar-nav-btn:hover,
+.dark-mode .calendar-day:hover {
+  background-color: var(--dark-hover-color);
+}
+
+.streak-card {
+  background-color: var(--primary-color);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  color: white;
+  display: flex;
+  align-items: center;
+}
+
+.streak-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px;
+  font-size: 24px;
+}
+
+.nutrition-card {
+  background-color: var(--card-background);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.nutrition-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.nutrition-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.nutrition-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  font-size: 16px;
+}
+
+.calories-icon {
+  background-color: #ffe0e0;
+  color: #ff6b6b;
+}
+
+.protein-icon {
+  background-color: #e0f0ff;
+  color: #4a90e2;
+}
+
+.carbs-icon {
+  background-color: #fff0e0;
+  color: #f39c12;
+}
+
+.fat-icon {
+  background-color: #e0ffe0;
+  color: #2ecc71;
+}
+
+.suggestion-card {
+  background-color: var(--card-background);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.food-suggestion {
+  display: flex;
+  overflow-x: auto;
+  margin-top: 12px;
+  padding-bottom: 8px;
+}
+
+.food-item {
+  min-width: 120px;
+  margin-right: 12px;
+  background-color: var(--background-color);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+}
+
+.food-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  margin: 0 auto 8px;
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--light-text-color);
+  font-size: 24px;
+}
+
+/* 卡路里圓圈圖樣式 */
+.calories-card {
+  background-color: var(--card-background);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.calories-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.calories-circle-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 10px 0;
+}
+
+.calories-circle {
+  position: relative;
+  width: 200px;
+  height: 200px;
+}
+
+.calories-circle-bg {
+  fill: none;
+  stroke: #f0f0f0;
+  stroke-width: 15;
+}
+
+.calories-circle-progress {
+  fill: none;
+  stroke: #2196f3; /* 藍色 */
+  stroke-width: 15;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: center;
+  transition: stroke-dashoffset 0.5s ease;
+}
+
+.calories-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  width: 100%;
+}
+
+.calories-value {
+  font-size: 40px;
+  font-weight: bold;
+  color: #333;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.calories-label {
+  font-size: 14px;
+  color: #777;
+  margin: 0;
+}
+
+.calories-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.calories-stat-item {
+  text-align: center;
+  flex: 1;
+}
+
+.calories-stat-value {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--success-color);
+}
+
+.calories-stat-label {
+  font-size: 12px;
+  color: var(--light-text-color);
+}
+
+.calories-stat-value.consumed {
+  color: var(--primary-color);
+}
+
+.calories-stat-value.burned {
+  color: var(--warning-color);
+}
+
+.nutrition-distribution {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.nutrition-distribution-item {
+  flex: 1;
+  padding: 10px;
+}
+
+.nutrition-distribution-value {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.nutrition-distribution-label {
+  font-size: 14px;
+  color: var(--light-text-color);
+}
+
+.exercise-card {
+  background-color: var(--background-color);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.exercise-info {
+  flex: 1;
+}
+
+.exercise-title {
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.exercise-description {
+  font-size: 12px;
+  color: var(--light-text-color);
+}
+
+.exercise-progress {
+  margin-top: 8px;
+  width: 100%;
+  height: 6px;
+  background-color: #e0e0e0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.exercise-progress-fill {
+  height: 100%;
+  background-color: var(--primary-color);
+  border-radius: 3px;
+}
+
+.play-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  margin-left: 16px;
+}
+
+.week-circles {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20px;
+}
+
+.day-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  background-color: #f0f0f0;
+  color: #777;
+}
+
+.day-circle .day-name {
+  font-size: 12px;
+  font-weight: normal;
+  margin-bottom: 2px;
+}
+
+.day-circle .day-number {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.day-circle.active {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.day-circle.selected {
+  background-color: rgba(var(--primary-color-rgb), 0.2);
+  border: 2px solid var(--primary-color);
+  color: var(--primary-color);
+}
+
+.stats-card {
+  background-color: var(--card-background);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* 加載指示器樣式 */
+.loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  color: var(--text-secondary);
+}
+
+.loading-indicator svg {
+  font-size: 36px;
+  margin-bottom: 12px;
+  color: var(--primary-color);
+}
+
+.loading-indicator p {
+  font-size: 16px;
+  font-weight: 500;
+} 

@@ -1,0 +1,149 @@
+.record-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow-y: auto;
+  padding-top: 8px;
+}
+
+.record-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.date-selector {
+  display: flex;
+  align-items: center;
+  background-color: var(--card-background);
+  border-radius: 20px;
+  padding: 8px 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.date-arrow {
+  color: var(--primary-color);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.date-display {
+  margin: 0 12px;
+  font-weight: 500;
+}
+
+.meal-section {
+  margin-bottom: 24px;
+}
+
+.meal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.meal-title {
+  display: flex;
+  align-items: center;
+}
+
+.meal-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  color: white;
+}
+
+.add-meal-button {
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.food-item {
+  display: flex;
+  align-items: center;
+  background-color: var(--card-background);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.food-image {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  background-color: #f0f0f0;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--light-text-color);
+  font-size: 20px;
+}
+
+.food-details {
+  flex: 1;
+}
+
+.food-actions {
+  display: flex;
+  align-items: center;
+}
+
+.food-action-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--light-text-color);
+  margin-left: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.daily-summary {
+  background-color: var(--card-background);
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+  font-weight: bold;
+} 

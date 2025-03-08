@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>歡迎 - 健康管理APP</title>
+    <!-- Tailwind CSS CDN -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome CDN -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- 自定義樣式 -->
+    <link rel="stylesheet" href="../css/styles.css" />
+    <style>
+      body {
+        background-color: var(--card-background);
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .welcome-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 24px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .welcome-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        z-index: 2;
+      }
+
+      .welcome-header {
+        margin-top: 40px;
+      }
+
+      .welcome-title {
+        font-size: 36px;
+        font-weight: bold;
+        margin-bottom: 8px;
+      }
+
+      .welcome-app {
+        font-size: 48px;
+        font-weight: bold;
+        margin-bottom: 24px;
+      }
+
+      .welcome-footer {
+        margin-bottom: 40px;
+      }
+
+      .start-button {
+        background-color: #ffd600;
+        color: #000;
+        border-radius: 30px;
+        padding: 16px 24px;
+        font-size: 18px;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .start-button-arrows {
+        display: flex;
+      }
+
+      .start-button-arrow {
+        margin-left: 4px;
+      }
+
+      .decoration-circle {
+        position: absolute;
+        border-radius: 50%;
+        z-index: 1;
+      }
+
+      .decoration-circle-1 {
+        width: 200px;
+        height: 200px;
+        background-color: #ff7a3d;
+        top: -100px;
+        left: -100px;
+      }
+
+      .decoration-circle-2 {
+        width: 150px;
+        height: 150px;
+        background-color: #ffd600;
+        bottom: -50px;
+        left: -50px;
+      }
+
+      .decoration-circle-3 {
+        width: 100px;
+        height: 100px;
+        background-color: #2196f3;
+        top: 50px;
+        right: -50px;
+      }
+
+      .decoration-circle-4 {
+        width: 30px;
+        height: 30px;
+        background-color: #ff7a3d;
+        bottom: 150px;
+        left: 50px;
+      }
+
+      .decoration-circle-5 {
+        width: 20px;
+        height: 20px;
+        background-color: #2196f3;
+        top: 200px;
+        right: 80px;
+      }
+
+      .runner-image {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 540px;
+        height: 540px;
+        z-index: 1;
+        background-image: url("../images/running.png");
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: right bottom;
+      }
+
+      .decoration-line {
+        position: absolute;
+        background-color: #ffd600;
+        z-index: 1;
+      }
+
+      .decoration-line-1 {
+        width: 100px;
+        height: 6px;
+        transform: rotate(45deg);
+        top: 150px;
+        left: 50px;
+      }
+
+      .decoration-line-2 {
+        width: 60px;
+        height: 6px;
+        transform: rotate(-30deg);
+        bottom: 200px;
+        right: 100px;
+      }
+
+      .decoration-dot {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #2196f3;
+        z-index: 1;
+      }
+
+      .decoration-dot-1 {
+        top: 180px;
+        left: 30px;
+      }
+
+      .decoration-dot-2 {
+        top: 220px;
+        left: 80px;
+      }
+
+      .decoration-dot-3 {
+        bottom: 150px;
+        right: 60px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="welcome-container">
+      <!-- 裝飾元素 -->
+      <div class="decoration-circle decoration-circle-1"></div>
+      <div class="decoration-circle decoration-circle-2"></div>
+      <div class="decoration-circle decoration-circle-3"></div>
+      <div class="decoration-circle decoration-circle-4"></div>
+      <div class="decoration-circle decoration-circle-5"></div>
+
+      <div class="decoration-line decoration-line-1"></div>
+      <div class="decoration-line decoration-line-2"></div>
+
+      <div class="decoration-dot decoration-dot-1"></div>
+      <div class="decoration-dot decoration-dot-2"></div>
+      <div class="decoration-dot decoration-dot-3"></div>
+
+      <!-- 跑步者圖片 -->
+      <div class="runner-image"></div>
+
+      <div class="welcome-content">
+        <div class="welcome-header">
+          <div class="welcome-title">Welcome to</div>
+          <div class="welcome-app">Fitness app!</div>
+        </div>
+
+        <div class="welcome-footer">
+          <button
+            class="start-button"
+            onclick="window.location.href='login.html'"
+          >
+            <span>Start!</span>
+            <div class="start-button-arrows">
+              <span class="start-button-arrow">›</span>
+              <span class="start-button-arrow">›</span>
+              <span class="start-button-arrow">›</span>
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="../js/color-scheme.js"></script>
+  </body>
+</html>

@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>設置 - 健康管理APP</title>
+    <!-- Tailwind CSS CDN -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome CDN -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- 自定義樣式 -->
+    <link rel="stylesheet" href="../css/styles.css" />
+    <style>
+      body {
+        background-color: var(--background-color);
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .settings-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 16px;
+        overflow-y: auto;
+      }
+
+      .settings-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+
+      .back-button {
+        margin-right: 16px;
+        font-size: 20px;
+        color: var(--text-color);
+      }
+
+      .settings-section {
+        background-color: var(--card-background);
+        border-radius: 16px;
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+
+      .section-title {
+        font-weight: bold;
+        margin-bottom: 16px;
+      }
+
+      .setting-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .setting-item:last-child {
+        border-bottom: none;
+      }
+
+      .setting-label {
+        display: flex;
+        align-items: center;
+      }
+
+      .setting-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background-color: var(--background-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        color: var(--primary-color);
+      }
+
+      /* 開關按鈕樣式 */
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+      }
+
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+        border-radius: 24px;
+      }
+
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 2px;
+        bottom: 2px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+      }
+
+      input:checked + .slider {
+        background-color: var(--primary-color);
+      }
+
+      input:checked + .slider:before {
+        transform: translateX(26px);
+      }
+
+      /* 字體大小選擇器 */
+      .font-size-options {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 16px;
+      }
+
+      .font-size-option {
+        flex: 1;
+        text-align: center;
+        padding: 8px;
+        border-radius: 8px;
+        margin: 0 4px;
+        background-color: var(--background-color);
+        cursor: pointer;
+      }
+
+      .font-size-option.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .font-size-small {
+        font-size: 12px;
+      }
+
+      .font-size-medium {
+        font-size: 16px;
+      }
+
+      .font-size-large {
+        font-size: 20px;
+      }
+
+      /* 色系選擇器樣式 */
+      .color-scheme-options {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 16px;
+        margin-bottom: 16px;
+      }
+
+      .color-scheme-circle {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        transition: transform 0.2s;
+        border: 2px solid transparent;
+      }
+
+      .color-scheme-circle:hover {
+        transform: scale(1.1);
+      }
+
+      .color-scheme-circle.active {
+        border: 2px solid #000;
+      }
+
+      .color-scheme-1 {
+        background: linear-gradient(135deg, #ff7a3d, #ffb23d);
+      }
+
+      .color-scheme-2 {
+        background: linear-gradient(135deg, #ff5e7d, #ff8a5e);
+      }
+
+      .color-scheme-3 {
+        background: linear-gradient(135deg, #2196f3, #4db6ff);
+      }
+
+      .color-scheme-4 {
+        background: linear-gradient(135deg, #7ed957, #a0e878);
+      }
+
+      .color-scheme-5 {
+        background: linear-gradient(135deg, #6c5ce7, #8e7cf3);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="settings-container">
+      <div class="settings-header">
+        <a href="profile.html" class="back-button">
+          <i class="fas fa-arrow-left"></i>
+        </a>
+        <h2 class="text-xl font-bold">設置</h2>
+      </div>
+
+      <!-- 外觀設置 -->
+      <div class="settings-section">
+        <h3 class="section-title">外觀</h3>
+
+        <div class="setting-item">
+          <div class="setting-label">
+            <div class="setting-icon">
+              <i class="fas fa-moon"></i>
+            </div>
+            <div>
+              <div>深色模式</div>
+              <div class="text-xs text-gray-500">調整應用外觀</div>
+            </div>
+          </div>
+
+          <label class="switch">
+            <input type="checkbox" id="dark-mode-toggle" />
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-label">
+            <div class="setting-icon">
+              <i class="fas fa-palette"></i>
+            </div>
+            <div>
+              <div>色系選擇</div>
+              <div class="text-xs text-gray-500">選擇應用主題色系</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="color-scheme-options">
+          <div
+            class="color-scheme-circle color-scheme-1 active"
+            data-scheme="1"
+          ></div>
+          <div class="color-scheme-circle color-scheme-2" data-scheme="2"></div>
+          <div class="color-scheme-circle color-scheme-3" data-scheme="3"></div>
+          <div class="color-scheme-circle color-scheme-4" data-scheme="4"></div>
+          <div class="color-scheme-circle color-scheme-5" data-scheme="5"></div>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-label">
+            <div class="setting-icon">
+              <i class="fas fa-font"></i>
+            </div>
+            <div>
+              <div>字體大小</div>
+              <div class="text-xs text-gray-500">調整文字顯示大小</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="font-size-options">
+          <div class="font-size-option font-size-small" data-font-size="small">
+            小
+          </div>
+          <div
+            class="font-size-option font-size-medium active"
+            data-font-size="medium"
+          >
+            中
+          </div>
+          <div class="font-size-option font-size-large" data-font-size="large">
+            大
+          </div>
+        </div>
+      </div>
+
+      <!-- 通知設置 -->
+      <div class="settings-section">
+        <h3 class="section-title">通知</h3>
+
+        <div class="setting-item">
+          <div class="setting-label">
+            <div class="setting-icon">
+              <i class="fas fa-bell"></i>
+            </div>
+            <div>
+              <div>推送通知</div>
+              <div class="text-xs text-gray-500">接收應用推送通知</div>
+            </div>
+          </div>
+
+          <label class="switch">
+            <input type="checkbox" checked />
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-label">
+            <div class="setting-icon">
+              <i class="fas fa-utensils"></i>
+            </div>
+            <div>
+              <div>用餐提醒</div>
+              <div class="text-xs text-gray-500">定時提醒記錄用餐</div>
+            </div>
+          </div>
+
+          <label class="switch">
+            <input type="checkbox" checked />
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-label">
+            <div class="setting-icon">
+              <i class="fas fa-trophy"></i>
+            </div>
+            <div>
+              <div>目標達成通知</div>
+              <div class="text-xs text-gray-500">當達成目標時通知</div>
+            </div>
+          </div>
+
+          <label class="switch">
+            <input type="checkbox" checked />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- 數據與隱私 -->
+      <div class="settings-section">
+        <h3 class="section-title">數據與隱私</h3>
+
+        <div class="setting-item">
+          <div class="setting-label">
+            <div class="setting-icon">
+              <i class="fas fa-cloud-download-alt"></i>
+            </div>
+            <div>
+              <div>導出數據</div>
+              <div class="text-xs text-gray-500">下載您的健康數據</div>
+            </div>
+          </div>
+
+          <i class="fas fa-chevron-right text-gray-400"></i>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-label">
+            <div class="setting-icon">
+              <i class="fas fa-trash-alt"></i>
+            </div>
+            <div>
+              <div>清除數據</div>
+              <div class="text-xs text-gray-500">刪除所有本地數據</div>
+            </div>
+          </div>
+
+          <i class="fas fa-chevron-right text-gray-400"></i>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-label">
+            <div class="setting-icon">
+              <i class="fas fa-shield-alt"></i>
+            </div>
+            <div>
+              <div>隱私設置</div>
+              <div class="text-xs text-gray-500">管理數據共享選項</div>
+            </div>
+          </div>
+
+          <i class="fas fa-chevron-right text-gray-400"></i>
+        </div>
+      </div>
+
+      <!-- 關於 -->
+      <div class="settings-section">
+        <h3 class="section-title">關於</h3>
+
+        <div class="setting-item">
+          <div class="setting-label">
+            <div class="setting-icon">
+              <i class="fas fa-info-circle"></i>
+            </div>
+            <div>
+              <div>版本</div>
+              <div class="text-xs text-gray-500">當前版本信息</div>
+            </div>
+          </div>
+
+          <div class="text-gray-500">v1.0.0</div>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-label">
+            <div class="setting-icon">
+              <i class="fas fa-file-alt"></i>
+            </div>
+            <div>
+              <div>使用條款</div>
+              <div class="text-xs text-gray-500">查看使用條款</div>
+            </div>
+          </div>
+
+          <i class="fas fa-chevron-right text-gray-400"></i>
+        </div>
+
+        <div class="setting-item">
+          <div class="setting-label">
+            <div class="setting-icon">
+              <i class="fas fa-shield-alt"></i>
+            </div>
+            <div>
+              <div>隱私政策</div>
+              <div class="text-xs text-gray-500">查看隱私政策</div>
+            </div>
+          </div>
+
+          <i class="fas fa-chevron-right text-gray-400"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="../js/main.js"></script>
+    <script src="../js/color-scheme.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // 深色模式切換
+        const darkModeToggle = document.getElementById("dark-mode-toggle");
+        const isDarkMode = localStorage.getItem("darkMode") === "true";
+
+        if (isDarkMode) {
+          darkModeToggle.checked = true;
+          document.body.classList.add("dark-mode");
+        }
+
+        darkModeToggle.addEventListener("change", function () {
+          document.body.classList.toggle("dark-mode");
+          localStorage.setItem("darkMode", this.checked);
+        });
+
+        // 字體大小切換
+        const fontSizeOptions = document.querySelectorAll(".font-size-option");
+        const savedFontSize = localStorage.getItem("fontSize") || "medium";
+
+        fontSizeOptions.forEach((option) => {
+          if (option.getAttribute("data-font-size") === savedFontSize) {
+            option.classList.add("active");
+          } else {
+            option.classList.remove("active");
+          }
+
+          option.addEventListener("click", function () {
+            // 移除所有active類
+            fontSizeOptions.forEach((opt) => opt.classList.remove("active"));
+            // 添加active類到當前選項
+            this.classList.add("active");
+            // 獲取字體大小
+            const fontSize = this.getAttribute("data-font-size");
+            // 保存設置
+            localStorage.setItem("fontSize", fontSize);
+            // 應用字體大小
+            document.body.className = document.body.className.replace(
+              /font-size-(small|medium|large)/g,
+              ""
+            );
+            document.body.classList.add(`font-size-${fontSize}`);
+          });
+        });
+
+        // 色系切換功能已移至 color-scheme.js
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>紀錄 - 健康管理APP</title>
+    <!-- Tailwind CSS CDN -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome CDN -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- 自定義樣式 -->
+    <link rel="stylesheet" href="../css/styles.css" />
+    <style>
+      body {
+        background-color: var(--background-color);
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .record-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 16px;
+        overflow-y: auto;
+      }
+
+      .record-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .date-selector {
+        display: flex;
+        align-items: center;
+        background-color: var(--card-background);
+        border-radius: 20px;
+        padding: 8px 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .date-arrow {
+        color: var(--primary-color);
+        font-size: 16px;
+      }
+
+      .date-display {
+        margin: 0 12px;
+        font-weight: 500;
+      }
+
+      .meal-section {
+        margin-bottom: 24px;
+      }
+
+      .meal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .meal-title {
+        display: flex;
+        align-items: center;
+      }
+
+      .meal-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        color: white;
+      }
+
+      .add-meal-button {
+        color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+      }
+
+      .food-item {
+        display: flex;
+        align-items: center;
+        background-color: var(--card-background);
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .food-image {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        background-color: #f0f0f0;
+        margin-right: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--light-text-color);
+      }
+
+      .food-details {
+        flex: 1;
+      }
+
+      .food-actions {
+        display: flex;
+        align-items: center;
+      }
+
+      .food-action-button {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--light-text-color);
+        margin-left: 8px;
+      }
+
+      .daily-summary {
+        background-color: var(--card-background);
+        border-radius: 16px;
+        padding: 16px;
+        margin-top: 16px;
+      }
+
+      .summary-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+
+      .summary-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+
+      .summary-total {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border-color);
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="record-container">
+      <div class="record-header">
+        <h2 class="text-xl font-bold">飲食紀錄</h2>
+
+        <div class="date-selector">
+          <i class="fas fa-chevron-left date-arrow"></i>
+          <span class="date-display">2023年5月15日</span>
+          <i class="fas fa-chevron-right date-arrow"></i>
+        </div>
+      </div>
+
+      <!-- 早餐 -->
+      <div class="meal-section">
+        <div class="meal-header">
+          <div class="meal-title">
+            <div class="meal-icon">
+              <i class="fas fa-coffee"></i>
+            </div>
+            <h3 class="font-bold">早餐</h3>
+          </div>
+
+          <button class="add-meal-button" onclick="navigateTo('camera')">
+            <i class="fas fa-plus mr-1"></i> 添加
+          </button>
+        </div>
+
+        <div class="food-item">
+          <div class="food-image">
+            <i class="fas fa-bread-slice"></i>
+          </div>
+          <div class="food-details">
+            <div class="flex justify-between">
+              <p class="font-medium">全麥吐司</p>
+              <p class="text-sm">150 卡</p>
+            </div>
+            <p class="text-xs text-gray-500">2 片</p>
+          </div>
+          <div class="food-actions">
+            <button class="food-action-button">
+              <i class="fas fa-pen"></i>
+            </button>
+            <button class="food-action-button">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="food-item">
+          <div class="food-image">
+            <i class="fas fa-egg"></i>
+          </div>
+          <div class="food-details">
+            <div class="flex justify-between">
+              <p class="font-medium">煎蛋</p>
+              <p class="text-sm">80 卡</p>
+            </div>
+            <p class="text-xs text-gray-500">1 個</p>
+          </div>
+          <div class="food-actions">
+            <button class="food-action-button">
+              <i class="fas fa-pen"></i>
+            </button>
+            <button class="food-action-button">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 午餐 -->
+      <div class="meal-section">
+        <div class="meal-header">
+          <div class="meal-title">
+            <div class="meal-icon">
+              <i class="fas fa-utensils"></i>
+            </div>
+            <h3 class="font-bold">午餐</h3>
+          </div>
+
+          <button class="add-meal-button" onclick="navigateTo('camera')">
+            <i class="fas fa-plus mr-1"></i> 添加
+          </button>
+        </div>
+
+        <div class="food-item">
+          <div class="food-image">
+            <i class="fas fa-drumstick-bite"></i>
+          </div>
+          <div class="food-details">
+            <div class="flex justify-between">
+              <p class="font-medium">雞肉沙拉</p>
+              <p class="text-sm">320 卡</p>
+            </div>
+            <p class="text-xs text-gray-500">1 份</p>
+          </div>
+          <div class="food-actions">
+            <button class="food-action-button">
+              <i class="fas fa-pen"></i>
+            </button>
+            <button class="food-action-button">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 晚餐 -->
+      <div class="meal-section">
+        <div class="meal-header">
+          <div class="meal-title">
+            <div class="meal-icon">
+              <i class="fas fa-moon"></i>
+            </div>
+            <h3 class="font-bold">晚餐</h3>
+          </div>
+
+          <button class="add-meal-button" onclick="navigateTo('camera')">
+            <i class="fas fa-plus mr-1"></i> 添加
+          </button>
+        </div>
+
+        <div class="food-item">
+          <div class="food-image">
+            <i class="fas fa-fish"></i>
+          </div>
+          <div class="food-details">
+            <div class="flex justify-between">
+              <p class="font-medium">鮭魚</p>
+              <p class="text-sm">200 卡</p>
+            </div>
+            <p class="text-xs text-gray-500">100 克</p>
+          </div>
+          <div class="food-actions">
+            <button class="food-action-button">
+              <i class="fas fa-pen"></i>
+            </button>
+            <button class="food-action-button">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 點心 -->
+      <div class="meal-section">
+        <div class="meal-header">
+          <div class="meal-title">
+            <div class="meal-icon">
+              <i class="fas fa-cookie"></i>
+            </div>
+            <h3 class="font-bold">點心</h3>
+          </div>
+
+          <button class="add-meal-button" onclick="navigateTo('camera')">
+            <i class="fas fa-plus mr-1"></i> 添加
+          </button>
+        </div>
+
+        <div class="text-center py-4 text-gray-500">
+          <p>尚未添加點心</p>
+        </div>
+      </div>
+
+      <!-- 每日總結 -->
+      <div class="daily-summary">
+        <div class="summary-header">
+          <h3 class="font-bold">每日總結</h3>
+          <span class="text-sm text-primary-color">目標: 1500 卡</span>
+        </div>
+
+        <div class="summary-item">
+          <span>早餐</span>
+          <span>230 卡</span>
+        </div>
+
+        <div class="summary-item">
+          <span>午餐</span>
+          <span>320 卡</span>
+        </div>
+
+        <div class="summary-item">
+          <span>晚餐</span>
+          <span>200 卡</span>
+        </div>
+
+        <div class="summary-item">
+          <span>點心</span>
+          <span>0 卡</span>
+        </div>
+
+        <div class="summary-total">
+          <span>總計</span>
+          <span>750 卡</span>
+        </div>
+
+        <div class="mt-4">
+          <div class="flex justify-between text-sm mb-1">
+            <span>今日進度</span>
+            <span>50%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 50%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="../js/main.js"></script>
+  </body>
+</html>

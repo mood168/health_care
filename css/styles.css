@@ -1,0 +1,320 @@
+/* 主要樣式 */
+:root {
+  --primary-color: #FF7A3D;
+  --secondary-color: #2196F3;
+  --danger-color: #e74c3c;
+  --warning-color: #f39c12;
+  --success-color: #7ED957;
+  --text-color: #333333;
+  --light-text-color: #777777;
+  --background-color: #f5f5f5;
+  --card-background: #ffffff;
+  --border-color: #e0e0e0;
+  
+  /* 深色模式顏色 */
+  --dark-background: #121212;
+  --dark-card-background: #1e1e1e;
+  --dark-text-color: #e0e0e0;
+  --dark-light-text: #a0a0a0;
+  --dark-border-color: #333333;
+}
+
+/* 自定義樣式 */
+.app-container {
+  width: 375px;
+  height: 812px;
+  margin: 0 auto;
+  background-color: var(--background-color);
+  border-radius: 40px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border: 12px solid #1a1a1a;
+}
+
+.status-bar {
+  height: 44px;
+  padding: 0 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: transparent;
+  font-size: 12px;
+  color: #000;
+  font-weight: 600;
+  z-index: 5;
+  position: relative;
+}
+
+.tab-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 83px;
+  background-color: var(--card-background);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  border-top: 1px solid var(--border-color);
+  padding-bottom: 20px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.tab-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--light-text-color);
+  font-size: 10px;
+  width: 20%;
+}
+
+.tab-item.active {
+  color: var(--primary-color);
+}
+
+.tab-icon {
+  font-size: 22px;
+  margin-bottom: 4px;
+}
+
+.content-area {
+  height: calc(100% - 127px);
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.week-circles {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 20px;
+}
+
+.day-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.day-circle.completed {
+  background-color: var(--success-color);
+  color: white;
+}
+
+.day-circle.in-progress {
+  background-color: var(--warning-color);
+  color: white;
+}
+
+.day-circle.not-started {
+  background-color: var(--light-text-color);
+  color: white;
+}
+
+.day-circle.today {
+  border: 2px solid var(--primary-color);
+}
+
+.stats-card {
+  background-color: var(--card-background);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.camera-options {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20px;
+}
+
+.camera-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  background-color: var(--card-background);
+  border-radius: 12px;
+  width: 30%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.camera-preview {
+  width: 100%;
+  height: 300px;
+  background-color: #000;
+  border-radius: 16px;
+  margin: 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.form-select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 16px;
+  background-color: var(--card-background);
+}
+
+.btn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  display: inline-block;
+  border: none;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn-secondary {
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+.btn-danger {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+.btn-block {
+  display: block;
+  width: 100%;
+}
+
+.avatar-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.avatar-preview {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background-color: var(--border-color);
+  margin-bottom: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.social-group {
+  background-color: var(--card-background);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.social-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  margin-right: 16px;
+}
+
+.progress-bar {
+  height: 8px;
+  background-color: var(--border-color);
+  border-radius: 4px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: var(--primary-color);
+}
+
+/* 深色模式 */
+.dark-mode {
+  --background-color: var(--dark-background);
+  --card-background: var(--dark-card-background);
+  --text-color: var(--dark-text-color);
+  --light-text-color: var(--dark-light-text);
+  --border-color: var(--dark-border-color);
+}
+
+.dark-mode .status-bar,
+.dark-mode .tab-bar {
+  background-color: var(--dark-card-background);
+}
+
+.dark-mode .status-bar {
+  color: #fff;
+}
+
+/* 響應式字體大小 */
+.font-size-small {
+  font-size: 14px;
+}
+
+.font-size-medium {
+  font-size: 16px;
+}
+
+.font-size-large {
+  font-size: 18px;
+}
+
+/* 動畫效果 */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.pulse-animation {
+  animation: pulse 1.5s infinite;
+} 

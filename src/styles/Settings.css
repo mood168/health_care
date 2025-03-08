@@ -1,0 +1,191 @@
+.settings-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow-y: auto;
+  padding-top: 8px; /* 減少頂部間距，因為 StatusBar 已經提供了間距 */
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.back-button {
+  margin-right: 16px;
+  font-size: 20px;
+  color: var(--text-color);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.settings-section {
+  background-color: var(--card-background);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.section-title {
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.setting-item:last-child {
+  border-bottom: none;
+}
+
+.setting-label {
+  display: flex;
+  align-items: center;
+}
+
+.setting-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: var(--background-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  color: var(--primary-color);
+}
+
+/* 開關按鈕樣式 */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: var(--primary-color);
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+/* 字體大小選擇器 */
+.font-size-options {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.font-size-option {
+  flex: 1;
+  text-align: center;
+  padding: 8px;
+  border-radius: 8px;
+  margin: 0 4px;
+  background-color: var(--background-color);
+  cursor: pointer;
+}
+
+.font-size-option.active {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.font-size-small {
+  font-size: 12px;
+}
+
+.font-size-medium {
+  font-size: 16px;
+}
+
+.font-size-large {
+  font-size: 20px;
+}
+
+/* 色系選擇器樣式 */
+.color-scheme-options {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.color-scheme-circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+  border: 2px solid transparent;
+}
+
+.color-scheme-circle:hover {
+  transform: scale(1.1);
+}
+
+.color-scheme-circle.active {
+  border: 2px solid #000;
+}
+
+.color-scheme-1 {
+  background: linear-gradient(135deg, #ff7a3d, #ffb23d);
+}
+
+.color-scheme-2 {
+  background: linear-gradient(135deg, #ff5e7d, #ff8a5e);
+}
+
+.color-scheme-3 {
+  background: linear-gradient(135deg, #2196f3, #4db6ff);
+}
+
+.color-scheme-4 {
+  background: linear-gradient(135deg, #7ed957, #a0e878);
+}
+
+.color-scheme-5 {
+  background: linear-gradient(135deg, #6c5ce7, #8e7cf3);
+} 
