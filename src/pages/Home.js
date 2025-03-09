@@ -7,11 +7,14 @@ import '../styles/Home.css';
 
 const Home = () => {
   const navigate = useNavigate();
-  const { user, loading, hasProfile } = useUser();
+  const { user, loading, hasProfile, getProfile } = useUser();
   const calendarRef = useRef(null);
   
-  // 定義卡路里目標常數，確保整個頁面一致
-  const CALORIE_TARGET = 2000;
+  // 用戶個人資料狀態
+  const [userProfile, setUserProfile] = useState(null);
+  
+  // 定義卡路里目標狀態，初始值為2000，將在加載用戶資料後更新
+  const [calorieTarget, setCalorieTarget] = useState(2000);
   
   // 新增狀態來存儲當前週的日期
   const [weekDays, setWeekDays] = useState([]);
@@ -25,12 +28,12 @@ const Home = () => {
   
   // 營養攝取相關狀態
   const [nutritionData, setNutritionData] = useState({
-    calories: { consumed: 650, target: CALORIE_TARGET, unit: '卡' },
+    calories: { consumed: 650, target: 2000, unit: '卡' },
     protein: { consumed: 25, target: 60, unit: '克' },
     carbs: { consumed: 80, target: 180, unit: '克' },
     fat: { consumed: 20, target: 50, unit: '克' }
   });
-  const [remainingCalories, setRemainingCalories] = useState(CALORIE_TARGET - 650);
+  const [remainingCalories, setRemainingCalories] = useState(2000 - 650);
   const [nutritionPercentages, setNutritionPercentages] = useState({
     calories: 0,
     protein: 0,
@@ -48,10 +51,32 @@ const Home = () => {
       // 如果用戶已登入但沒有個人資料，則導航到個人資料頁面
       navigate('/profile', { state: { fromLogin: true, requireProfile: true } });
     } else if (!loading && user) {
-      // 如果用戶已登入，則載入當天的數據
+      // 如果用戶已登入，則載入用戶個人資料和當天的數據
+      loadUserProfile();
       loadDataForDate(new Date());
     }
   }, [loading, user, hasProfile, navigate]);
+
+  // 加載用戶個人資料
+  const loadUserProfile = async () => {
+    try {
+      const profile = await getProfile();
+      if (profile) {
+        setUserProfile(profile);
+        // 更新卡路里目標
+        if (profile.daily_calorie_goal) {
+          setCalorieTarget(profile.daily_calorie_goal);
+          // 更新營養數據中的目標值
+          setNutritionData(prev => ({
+            ...prev,
+            calories: { ...prev.calories, target: profile.daily_calorie_goal }
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('加載用戶個人資料失敗:', error);
+    }
+  };
 
   // 初始化當前週的日期和營養數據
   useEffect(() => {
@@ -116,7 +141,7 @@ const Home = () => {
       
       // 5. 更新狀態
       setNutritionData({
-        calories: { consumed: Math.round(totalCalories), target: CALORIE_TARGET, unit: '卡' },
+        calories: { consumed: Math.round(totalCalories), target: calorieTarget, unit: '卡' },
         protein: { consumed: Math.round(totalProtein), target: 60, unit: '克' },
         carbs: { consumed: Math.round(totalCarbs), target: 180, unit: '克' },
         fat: { consumed: Math.round(totalFat), target: 50, unit: '克' }
@@ -135,7 +160,7 @@ const Home = () => {
         const caloriesBurned = 200 + (day * 10);
         
         setNutritionData({
-          calories: { consumed: caloriesConsumed, target: CALORIE_TARGET, unit: '卡' },
+          calories: { consumed: caloriesConsumed, target: calorieTarget, unit: '卡' },
           protein: { consumed: proteinConsumed, target: 60, unit: '克' },
           carbs: { consumed: carbsConsumed, target: 180, unit: '克' },
           fat: { consumed: fatConsumed, target: 50, unit: '克' }
@@ -248,21 +273,24 @@ const Home = () => {
     }
   };
 
-  // 計算營養數據百分比和剩餘卡路里
+  // 計算營養數據
   const calculateNutritionData = () => {
-    // 計算每種營養素的百分比
-    const percentages = {
-      calories: (nutritionData.calories.consumed / nutritionData.calories.target) * 100,
-      protein: (nutritionData.protein.consumed / nutritionData.protein.target) * 100,
-      carbs: (nutritionData.carbs.consumed / nutritionData.carbs.target) * 100,
-      fat: (nutritionData.fat.consumed / nutritionData.fat.target) * 100
-    };
+    // 計算營養素百分比
+    const caloriesPercentage = (nutritionData.calories.consumed / nutritionData.calories.target) * 100;
+    const proteinPercentage = (nutritionData.protein.consumed / nutritionData.protein.target) * 100;
+    const carbsPercentage = (nutritionData.carbs.consumed / nutritionData.carbs.target) * 100;
+    const fatPercentage = (nutritionData.fat.consumed / nutritionData.fat.target) * 100;
     
-    setNutritionPercentages(percentages);
+    setNutritionPercentages({
+      calories: caloriesPercentage,
+      protein: proteinPercentage,
+      carbs: carbsPercentage,
+      fat: fatPercentage
+    });
     
-    // 計算剩餘卡路里（考慮已燃燒的卡路里）
+    // 計算剩餘卡路里
     const remaining = nutritionData.calories.target - nutritionData.calories.consumed + burnedCalories;
-    setRemainingCalories(remaining);
+    setRemainingCalories(Math.max(0, remaining));
   };
 
   // 點擊外部關閉日曆彈出窗口
@@ -437,7 +465,7 @@ const Home = () => {
   // 初始化卡路里圓圈圖
   useEffect(() => {
     // 設置卡路里數據
-    const totalCalories = CALORIE_TARGET;
+    const totalCalories = calorieTarget;
     const consumedCalories = nutritionData.calories.consumed; // 已攝入的卡路里
     const caloriesBurned = burnedCalories; // 已燃燒的卡路里
     const remaining = totalCalories - consumedCalories + caloriesBurned;
@@ -467,14 +495,18 @@ const Home = () => {
     if (caloriesValueElement) {
       caloriesValueElement.textContent = remaining;
     }
-  }, [nutritionData, burnedCalories]);
+  }, [nutritionData, burnedCalories, calorieTarget]);
 
   return (
     <div className="content-area home-container">
       <div className="home-header">
         <div className="user-greeting">
           <div className="user-avatar">
-            <FontAwesomeIcon icon="user" />
+            {userProfile && userProfile.avatar ? (
+              <img src={userProfile.avatar} alt="用戶頭像" className="avatar-image" />
+            ) : (
+              <FontAwesomeIcon icon="user" />
+            )}
           </div>
           <div>
             <p className="text-sm text-gray-500">{greeting}，</p>
@@ -553,7 +585,7 @@ const Home = () => {
           <div className="calories-card">
             <div className="calories-header">
               <h3 className="text-lg font-bold">今日卡路里</h3>
-              <span className="text-sm text-gray-500">目標: {CALORIE_TARGET} 卡</span>
+              <span className="text-sm text-gray-500">目標: {calorieTarget} 卡</span>
             </div>
 
             <div className="calories-circle-container">

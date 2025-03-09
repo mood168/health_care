@@ -139,6 +139,7 @@
   font-size: 16px;
   background-color: var(--card-background);
   color: var(--text-color);
+  text-indent: 18px; /* 增加文字縮進，避免被圖標擋住 */
 }
 
 .form-input:focus {
@@ -333,4 +334,13 @@
 .decoration-dot-3 {
   bottom: 150px;
   right: 60px;
+}
+
+/* 響應式設計 */
+@media (max-width: 480px) {
+  .form-input {
+    padding: 10px 10px 10px 36px;
+    font-size: 14px;
+    text-indent: 15px; /* 移動設備上的文字縮進 */
+  }
 } 

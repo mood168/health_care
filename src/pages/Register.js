@@ -82,7 +82,7 @@ const Register = () => {
   return (
     <div className="register-container">
       <div className="register-card">
-        <h2 className="register-title">創建新帳號</h2>
+        <h2 className="register-title">註冊新帳號</h2>
         
         {success ? (
           <div className="success-message">

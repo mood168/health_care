@@ -116,7 +116,6 @@ const Welcome = () => {
           <div className="login-container">
             <div className="login-header">
               <h2 className="login-title">登入帳號</h2>
-              <p className="login-subtitle">歡迎回來，請登入您的帳號</p>
             </div>
 
             {error && <div className="login-error">{error}</div>}
