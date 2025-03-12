@@ -4,6 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import database from '../utils/database';
 import '../styles/Home.css';
+import { Line, Bar } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler } from 'chart.js';
+
+// 註冊 Chart.js 組件
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler);
 
 const Home = () => {
   const navigate = useNavigate();
@@ -13,8 +18,8 @@ const Home = () => {
   // 用戶個人資料狀態
   const [userProfile, setUserProfile] = useState(null);
   
-  // 定義卡路里目標狀態，初始值為2000，將在加載用戶資料後更新
-  const [calorieTarget, setCalorieTarget] = useState(2000);
+  // 定義卡路里目標狀態，初始值為1000，將在加載用戶資料後更新
+  const [calorieTarget, setCalorieTarget] = useState(1000);
   
   // 新增狀態來存儲當前週的日期
   const [weekDays, setWeekDays] = useState([]);
@@ -28,12 +33,12 @@ const Home = () => {
   
   // 營養攝取相關狀態
   const [nutritionData, setNutritionData] = useState({
-    calories: { consumed: 650, target: 2000, unit: '卡' },
+    calories: { consumed: 650, target: 1000, unit: '卡' },
     protein: { consumed: 25, target: 60, unit: '克' },
     carbs: { consumed: 80, target: 180, unit: '克' },
     fat: { consumed: 20, target: 50, unit: '克' }
   });
-  const [remainingCalories, setRemainingCalories] = useState(2000 - 650);
+  const [remainingCalories, setRemainingCalories] = useState(1000 - 650);
   const [nutritionPercentages, setNutritionPercentages] = useState({
     calories: 0,
     protein: 0,
@@ -42,6 +47,10 @@ const Home = () => {
   });
   const [burnedCalories, setBurnedCalories] = useState(250); // 已燃燒的卡路里
   const [isDataLoading, setIsDataLoading] = useState(false);
+  
+  // 卡路里變化和體重變化的數據
+  const [calorieHistory, setCalorieHistory] = useState({});
+  const [weightHistory, setWeightHistory] = useState({});
 
   // 檢查用戶是否已登入，如果沒有則重定向到登入頁面
   useEffect(() => {
@@ -462,6 +471,98 @@ const Home = () => {
            date.getFullYear() === selectedDay.getFullYear();
   };
 
+  // 生成模擬的卡路里歷史數據
+  const generateCalorieHistory = () => {
+    const today = new Date();
+    const data = [];
+    const labels = [];
+    
+    // 生成過去7天的數據
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      
+      // 格式化日期為 MM/DD
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      const formattedDate = `${month}/${day}`;
+      
+      // 生成隨機卡路里數據，但保持在合理範圍內
+      const baseCalories = 1800;
+      const randomVariation = Math.floor(Math.random() * 400) - 200; // -200 到 200 之間的隨機變化
+      const calories = baseCalories + randomVariation;
+      
+      data.push(calories);
+      labels.push(formattedDate);
+    }
+    
+    // 計算平均值
+    const average = data.reduce((sum, value) => sum + value, 0) / data.length;
+    
+    return { data, labels, average: Math.round(average) };
+  };
+  
+  // 生成模擬的體重歷史數據
+  const generateWeightHistory = () => {
+    const today = new Date();
+    const data = [];
+    const labels = [];
+    const dailyChanges = [];
+    
+    // 假設用戶的基礎體重
+    let baseWeight = userProfile?.weight || 65;
+    let previousWeight = baseWeight;
+    
+    // 生成過去7天的數據
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      
+      // 格式化日期為 MM/DD
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      const formattedDate = `${month}/${day}`;
+      
+      // 生成微小的體重變化，呈現下降趨勢
+      const randomVariation = (Math.random() * 0.4) - 0.2; // -0.2 到 0.2 之間的隨機變化
+      const trendDecrease = i * 0.05; // 隨著時間的輕微下降趨勢
+      const weight = (baseWeight - trendDecrease + randomVariation).toFixed(1);
+      
+      // 計算每日變化
+      if (i < 6) {
+        const dailyChange = (parseFloat(weight) - previousWeight).toFixed(1);
+        dailyChanges.push(parseFloat(dailyChange));
+      } else {
+        dailyChanges.push(0); // 第一天沒有變化
+      }
+      
+      previousWeight = parseFloat(weight);
+      data.push(parseFloat(weight));
+      labels.push(formattedDate);
+    }
+    
+    // 計算平均變化
+    const averageChange = dailyChanges.reduce((sum, value) => sum + value, 0) / (dailyChanges.length - 1);
+    
+    return { 
+      data, 
+      labels, 
+      dailyChanges,
+      averageChange: averageChange.toFixed(1)
+    };
+  };
+  
+  // 初始化圖表數據
+  useEffect(() => {
+    if (userProfile) {
+      const calorieData = generateCalorieHistory();
+      const weightData = generateWeightHistory();
+      
+      setCalorieHistory(calorieData);
+      setWeightHistory(weightData);
+    }
+  }, [userProfile]);
+
   // 初始化卡路里圓圈圖
   useEffect(() => {
     // 設置卡路里數據
@@ -497,6 +598,15 @@ const Home = () => {
     }
   }, [nutritionData, burnedCalories, calorieTarget]);
 
+  // 添加計算剩餘時間的函數
+  const getRemainingHours = () => {
+    const now = new Date();
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+    const diffMs = endOfDay - now;
+    return Math.ceil(diffMs / (1000 * 60 * 60));
+  };
+
   return (
     <div className="content-area home-container">
       <div className="home-header">
@@ -505,7 +615,7 @@ const Home = () => {
             {userProfile && userProfile.avatar ? (
               <img src={userProfile.avatar} alt="用戶頭像" className="avatar-image" />
             ) : (
-              <FontAwesomeIcon icon="user" />
+            <FontAwesomeIcon icon="user" />
             )}
           </div>
           <div>
@@ -584,8 +694,13 @@ const Home = () => {
           {/* 今日卡路里圓圈圖 */}
           <div className="calories-card">
             <div className="calories-header">
-              <h3 className="text-lg font-bold">今日卡路里</h3>
-              <span className="text-sm text-gray-500">目標: {calorieTarget} 卡</span>
+              <div>
+                <h3 className="text-lg font-bold">今日目標 {calorieTarget} 卡</h3>
+              </div>
+              <div className="weight-prediction">
+                <span className="text-sm font-bold text-success-color">預計可減 0.1 公斤</span>
+                <FontAwesomeIcon icon="arrow-down" className="prediction-icon" />
+              </div>
             </div>
 
             <div className="calories-circle-container">
@@ -615,22 +730,12 @@ const Home = () => {
 
             <div className="calories-stats">
               <div className="calories-stat-item">
-                <div className="calories-stat-value consumed">{nutritionData.calories.consumed} 卡</div>
+                <div className="calories-stat-value consumed large">{nutritionData.calories.consumed} 卡</div>
                 <div className="calories-stat-label">已攝入</div>
               </div>
               <div className="calories-stat-item">
-                <div className="calories-stat-value burned">{burnedCalories} 卡</div>
+                <div className="calories-stat-value burned large">{burnedCalories} 卡</div>
                 <div className="calories-stat-label">已燃燒</div>
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <div className="flex justify-between text-sm mb-1">
-                <span>進度</span>
-                <span>{Math.round(nutritionPercentages.calories)}%</span>
-              </div>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: `${Math.min(100, nutritionPercentages.calories)}%` }}></div>
               </div>
             </div>
           </div>
@@ -640,71 +745,226 @@ const Home = () => {
               <FontAwesomeIcon icon="fire" />
             </div>
             <div>
-              <h3 className="text-lg font-bold">連續達成目標</h3>
-              <p>已連續 3 天達成目標！</p>
+              <p className="streak-text">已連續 3 天達成目標啦！</p>
+            </div>
+          </div>
+
+          {/* 卡路里變化圖表 */}
+          <div className="chart-card">
+            <div className="chart-header">
+              <h3 className="text-lg font-bold">過去一周卡路里攝取</h3>
+              <p className="text-sm text-gray-500">平均: {calorieHistory.average} 卡路里/天</p>
+            </div>
+            <div className="chart-container">
+              {calorieHistory.labels && calorieHistory.data && (
+                <Bar
+                  data={{
+                    labels: calorieHistory.labels,
+                    datasets: [
+                      {
+                        label: '卡路里攝取',
+                        data: calorieHistory.data,
+                        backgroundColor: 'rgba(255, 122, 61, 0.7)',
+                        borderColor: 'rgba(255, 122, 61, 1)',
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        hoverBackgroundColor: 'rgba(255, 122, 61, 0.9)',
+                      },
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        display: false,
+                      },
+                      tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        titleColor: '#333',
+                        bodyColor: '#666',
+                        borderColor: 'rgba(255, 122, 61, 0.5)',
+                        borderWidth: 1,
+                        displayColors: false,
+                        callbacks: {
+                          label: function(context) {
+                            return `${context.parsed.y} 卡路里`;
+                          }
+                        }
+                      },
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: false,
+                        grid: {
+                          color: 'rgba(200, 200, 200, 0.2)',
+                        },
+                        ticks: {
+                          font: {
+                            size: 10,
+                          },
+                        },
+                      },
+                      x: {
+                        grid: {
+                          display: false,
+                        },
+                        ticks: {
+                          font: {
+                            size: 10,
+                          },
+                        },
+                      },
+                    },
+                  }}
+                  height={200}
+                />
+              )}
+            </div>
+          </div>
+          
+          {/* 體重變化圖表 */}
+          <div className="chart-card">
+            <div className="chart-header">
+              <h3 className="text-lg font-bold">過去一周體重變化</h3>
+              <p className="text-sm text-gray-500">平均變化: {weightHistory.averageChange < 0 ? '' : '+'}{weightHistory.averageChange} 公斤/天</p>
+            </div>
+            <div className="chart-container">
+              {weightHistory.labels && weightHistory.dailyChanges && (
+                <Bar
+                  data={{
+                    labels: weightHistory.labels,
+                    datasets: [
+                      {
+                        label: '體重變化',
+                        data: weightHistory.dailyChanges,
+                        backgroundColor: (context) => {
+                          const value = context.dataset.data[context.dataIndex];
+                          return value < 0 
+                            ? 'rgba(46, 204, 113, 0.7)' // 綠色表示減重
+                            : 'rgba(231, 76, 60, 0.7)'; // 紅色表示增重
+                        },
+                        borderColor: (context) => {
+                          const value = context.dataset.data[context.dataIndex];
+                          return value < 0 
+                            ? 'rgba(46, 204, 113, 1)' 
+                            : 'rgba(231, 76, 60, 1)';
+                        },
+                        borderWidth: 1,
+                        borderRadius: 5,
+                        hoverBackgroundColor: (context) => {
+                          const value = context.dataset.data[context.dataIndex];
+                          return value < 0 
+                            ? 'rgba(46, 204, 113, 0.9)' 
+                            : 'rgba(231, 76, 60, 0.9)';
+                        },
+                      },
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: {
+                        display: false,
+                      },
+                      tooltip: {
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        titleColor: '#333',
+                        bodyColor: '#666',
+                        borderWidth: 1,
+                        displayColors: false,
+                        callbacks: {
+                          label: function(context) {
+                            const value = context.parsed.y;
+                            return `${value < 0 ? '' : '+'}${value.toFixed(1)} 公斤`;
+                          }
+                        }
+                      },
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        grid: {
+                          color: 'rgba(200, 200, 200, 0.2)',
+                        },
+                        ticks: {
+                          font: {
+                            size: 10,
+                          },
+                          callback: function(value) {
+                            return `${value > 0 ? '+' : ''}${value.toFixed(1)}`;
+                          }
+                        },
+                      },
+                      x: {
+                        grid: {
+                          display: false,
+                        },
+                        ticks: {
+                          font: {
+                            size: 10,
+                          },
+                        },
+                      },
+                    },
+                  }}
+                  height={200}
+                />
+              )}
             </div>
           </div>
 
           <div className="nutrition-card">
             <div className="nutrition-header">
               <h3 className="text-lg font-bold">今日營養攝取</h3>
-              <span className="text-sm text-gray-500">剩餘 {remainingCalories} 卡路里</span>
+              <span className="text-sm text-gray-500">剩餘 {remainingCalories} 卡</span>
             </div>
 
-            <div className="nutrition-item">
-              <div className="nutrition-icon calories-icon">
+            <div className="nutrition-grid-row">
+              {/* 卡路里 */}
+              <div className="nutrition-item-compact">
+                <div className="nutrition-icon-small calories-icon">
                 <FontAwesomeIcon icon="fire-alt" />
               </div>
-              <div className="flex-1">
-                <div className="flex justify-between">
-                  <span>卡路里</span>
-                  <span>{nutritionData.calories.consumed} / {nutritionData.calories.target} {nutritionData.calories.unit}</span>
-                </div>
+                <div className="nutrition-label">卡路里</div>
+                <div className="nutrition-value">{nutritionData.calories.consumed}/{nutritionData.calories.target}</div>
                 <div className="progress-bar">
                   <div className="progress-fill" style={{ width: `${Math.min(100, nutritionPercentages.calories)}%` }}></div>
-                </div>
               </div>
             </div>
 
-            <div className="nutrition-item">
-              <div className="nutrition-icon protein-icon">
+              {/* 蛋白質 */}
+              <div className="nutrition-item-compact">
+                <div className="nutrition-icon-small protein-icon">
                 <FontAwesomeIcon icon="drumstick-bite" />
               </div>
-              <div className="flex-1">
-                <div className="flex justify-between">
-                  <span>蛋白質</span>
-                  <span>{nutritionData.protein.consumed} / {nutritionData.protein.target} {nutritionData.protein.unit}</span>
-                </div>
+                <div className="nutrition-label">蛋白質</div>
+                <div className="nutrition-value">{nutritionData.protein.consumed}/{nutritionData.protein.target}</div>
                 <div className="progress-bar">
                   <div className="progress-fill" style={{ width: `${Math.min(100, nutritionPercentages.protein)}%` }}></div>
-                </div>
               </div>
             </div>
 
-            <div className="nutrition-item">
-              <div className="nutrition-icon carbs-icon">
+              {/* 碳水化合物 */}
+              <div className="nutrition-item-compact">
+                <div className="nutrition-icon-small carbs-icon">
                 <FontAwesomeIcon icon="bread-slice" />
               </div>
-              <div className="flex-1">
-                <div className="flex justify-between">
-                  <span>碳水化合物</span>
-                  <span>{nutritionData.carbs.consumed} / {nutritionData.carbs.target} {nutritionData.carbs.unit}</span>
-                </div>
+                <div className="nutrition-label">碳水</div>
+                <div className="nutrition-value">{nutritionData.carbs.consumed}/{nutritionData.carbs.target}</div>
                 <div className="progress-bar">
                   <div className="progress-fill" style={{ width: `${Math.min(100, nutritionPercentages.carbs)}%` }}></div>
-                </div>
               </div>
             </div>
 
-            <div className="nutrition-item">
-              <div className="nutrition-icon fat-icon">
+              {/* 脂肪 */}
+              <div className="nutrition-item-compact">
+                <div className="nutrition-icon-small fat-icon">
                 <FontAwesomeIcon icon="cheese" />
               </div>
-              <div className="flex-1">
-                <div className="flex justify-between">
-                  <span>脂肪</span>
-                  <span>{nutritionData.fat.consumed} / {nutritionData.fat.target} {nutritionData.fat.unit}</span>
-                </div>
+                <div className="nutrition-label">脂肪</div>
+                <div className="nutrition-value">{nutritionData.fat.consumed}/{nutritionData.fat.target}</div>
                 <div className="progress-bar">
                   <div className="progress-fill" style={{ width: `${Math.min(100, nutritionPercentages.fat)}%` }}></div>
                 </div>
@@ -713,9 +973,14 @@ const Home = () => {
           </div>
 
           <div className="suggestion-card">
-            <h3 className="text-lg font-bold">今日飲食建議</h3>
-            <p className="text-sm text-gray-500">根據您的目標和今日攝取量</p>
+            <div className="suggestion-header">
+              <h3 className="text-lg font-bold">倒數 {getRemainingHours()} 小時建議</h3>
+              <p className="text-sm text-gray-500">根據目標、已攝取量及運動量</p>
+            </div>
 
+            <div className="suggestion-content">
+              <div className="suggestion-section">
+                <h4 className="suggestion-subtitle">飲食建議</h4>
             <div className="food-suggestion">
               <div className="food-item">
                 <div className="food-image">
@@ -740,85 +1005,33 @@ const Home = () => {
                 <p className="text-sm font-medium">蘋果</p>
                 <p className="text-xs text-gray-500">豐富纖維</p>
               </div>
-
-              <div className="food-item">
-                <div className="food-image">
-                  <FontAwesomeIcon icon="egg" />
-                </div>
-                <p className="text-sm font-medium">雞蛋</p>
-                <p className="text-xs text-gray-500">優質蛋白</p>
-              </div>
             </div>
           </div>
 
-          {/* 營養素分布 */}
-          <div className="nutrition-card">
-            <h3 className="text-lg font-bold">營養素分布</h3>
-
-            <div className="nutrition-distribution">
-              <div className="nutrition-distribution-item">
-                <div className="nutrition-distribution-value">25%</div>
-                <div className="nutrition-distribution-label">蛋白質</div>
+              <div className="suggestion-section">
+                <h4 className="suggestion-subtitle">運動建議</h4>
+                <div className="exercise-suggestion">
+                  <div className="exercise-item-small">
+                    <div className="exercise-icon-small">
+                      <FontAwesomeIcon icon="walking" />
               </div>
-              <div className="nutrition-distribution-item">
-                <div className="nutrition-distribution-value">50%</div>
-                <div className="nutrition-distribution-label">碳水化合物</div>
-              </div>
-              <div className="nutrition-distribution-item">
-                <div className="nutrition-distribution-value">25%</div>
-                <div className="nutrition-distribution-label">脂肪</div>
-              </div>
+                    <div className="exercise-info-small">
+                      <p className="text-sm font-medium">快走</p>
+                      <p className="text-xs text-gray-500">30分鐘 / -150卡</p>
             </div>
           </div>
 
-          {/* 運動項目 */}
-          <div className="exercise-card">
-            <div className="exercise-info">
-              <div className="exercise-title">Split squat</div>
-              <div className="exercise-description">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-                eiusmod.
+                  <div className="exercise-item-small">
+                    <div className="exercise-icon-small">
+                      <FontAwesomeIcon icon="dumbbell" />
               </div>
-              <div className="exercise-progress">
-                <div className="exercise-progress-fill" style={{ width: '18%' }}></div>
+                    <div className="exercise-info-small">
+                      <p className="text-sm font-medium">重訓</p>
+                      <p className="text-xs text-gray-500">20分鐘 / -100卡</p>
               </div>
             </div>
-            <div className="play-button">
-              <FontAwesomeIcon icon="play" />
             </div>
           </div>
-
-          {/* 體重項目 */}
-          <div className="exercise-card">
-            <div className="exercise-info">
-              <div className="exercise-title">Bodyweight</div>
-              <div className="exercise-description">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-                eiusmod.
-              </div>
-              <div className="exercise-progress">
-                <div className="exercise-progress-fill" style={{ width: '68%' }}></div>
-              </div>
-            </div>
-            <div className="play-button">
-              <FontAwesomeIcon icon="play" />
-            </div>
-          </div>
-
-          <div className="stats-card">
-            <h3 className="text-lg font-bold">今日活動預測</h3>
-            <div className="flex justify-between items-center mt-4">
-              <div>
-                <p className="text-sm text-gray-500">根據目前攝取和活動量</p>
-                <p className="text-lg font-bold text-success-color">
-                  預計減重 0.1 公斤
-                </p>
-              </div>
-              <div
-                className="w-12 h-12 rounded-full bg-success-color flex items-center justify-center text-white"
-              >
-                <FontAwesomeIcon icon="arrow-down" />
-              </div>
             </div>
           </div>
         </>

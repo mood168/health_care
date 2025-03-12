@@ -1,17 +1,28 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useUser } from '../context/UserContext';
 import database from '../utils/database';
+import initializeDatabase from '../utils/initDb';
 import '../styles/Camera.css';
 
 const Camera = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading } = useUser();
+  
+  // 從 location.state 中獲取用餐項目信息作為預設值
+  const defaultMealType = location.state?.mealType || '早餐';
+  
+  // 用餐項目狀態
+  const [mealType, setMealType] = useState(defaultMealType);
+  
   const [activeView, setActiveView] = useState('camera');
   const [photoTaken, setPhotoTaken] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
   const [recognizedFood, setRecognizedFood] = useState(null);
   const [nutritionInfo, setNutritionInfo] = useState(null);
   const videoRef = useRef(null);
@@ -54,15 +65,57 @@ const Camera = () => {
     };
   }, [activeView, photoTaken, cameraReady]);
 
+  // 檢查相機權限
+  const checkCameraPermission = async () => {
+    try {
+      // 檢查瀏覽器是否支持 mediaDevices API
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setError('您的瀏覽器不支持訪問相機。請使用更現代的瀏覽器或使用上傳功能。');
+        return false;
+      }
+
+      // 嘗試進行權限查詢
+      if (navigator.permissions && navigator.permissions.query) {
+        try {
+          const result = await navigator.permissions.query({ name: 'camera' });
+          
+          if (result.state === 'denied') {
+            setError('相機權限已被禁止。請在瀏覽器設置中允許訪問相機，然後刷新頁面重試。');
+            return false;
+          }
+        } catch (err) {
+          // 某些瀏覽器不支持相機權限查詢，我們將繼續初始化過程
+          console.log('權限查詢不支持，將直接嘗試訪問相機');
+        }
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('檢查相機權限時出錯:', err);
+      setError('檢查相機權限時出錯。您可以使用上傳功能來添加食物。');
+      return false;
+    }
+  };
+
   // 初始化相機
   const initCamera = async () => {
     try {
       // 清除錯誤
       setError('');
       
+      // 檢查瀏覽器是否支持 getUserMedia API
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('您的瀏覽器不支持訪問相機。請更新瀏覽器或使用上傳功能。');
+      }
+      
       // 請求相機訪問權限
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }, // 使用後置攝像頭（如果有的話）
+        video: { 
+          facingMode: 'environment', // 使用後置攝像頭（如果有的話）
+          width: { ideal: 1080 },
+          height: { ideal: 1080 }, // 設置為相同的寬高以獲得接近正方形的比例
+          aspectRatio: { ideal: 1 } // 明確要求 1:1 的比例
+        },
         audio: false
       });
       
@@ -78,7 +131,26 @@ const Camera = () => {
       }
     } catch (err) {
       console.error('相機初始化錯誤:', err);
-      setError('無法訪問相機。請確保已授予相機權限，或使用上傳功能。');
+      
+      // 根據錯誤類型提供更具體的錯誤消息
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        setError('相機權限被拒絕。請在瀏覽器設置中允許訪問相機，然後刷新頁面重試。');
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        setError('未檢測到相機設備。請確保您的設備有相機，或使用上傳功能。');
+      } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+        setError('相機可能正被其他應用使用。請關閉可能使用相機的應用後重試。');
+      } else if (err.name === 'OverconstrainedError') {
+        setError('相機不支持所請求的設置。請刷新頁面使用默認設置。');
+      } else {
+        setError(`無法訪問相機：${err.message || '未知錯誤'}。您可以使用上傳功能代替。`);
+      }
+      
+      // 自動切換到上傳視圖
+      setTimeout(() => {
+        if (!cameraReady && activeView === 'camera') {
+          showUploadView();
+        }
+      }, 5000);
     }
   };
 
@@ -91,19 +163,30 @@ const Camera = () => {
     setCameraReady(false);
   };
 
-  // 顯示拍照視圖
+  // 顯示相機視圖
   const showCameraView = () => {
     setActiveView('camera');
+    // 重置相機相關的狀態
     setPhotoTaken(false);
-    setSelectedImage(null);
+    setCameraReady(false);
     setRecognizedFood(null);
     setNutritionInfo(null);
     setProcessStatus('waiting');
-    
-    // 如果相機沒有準備好，則重新初始化
-    if (!cameraReady) {
-      initCamera();
-    }
+    setError('');
+
+    // 先檢查相機權限再初始化相機
+    checkCameraPermission().then(hasPermission => {
+      if (hasPermission) {
+        initCamera();
+      } else {
+        // 5秒後自動切換到上傳視圖
+        setTimeout(() => {
+          if (!cameraReady && activeView === 'camera') {
+            showUploadView();
+          }
+        }, 5000);
+      }
+    });
   };
 
   // 顯示上傳視圖
@@ -140,16 +223,25 @@ const Camera = () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     
-    // 設置畫布大小與視頻大小相同
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    // 計算正方形裁剪區域
+    const size = Math.min(video.videoWidth, video.videoHeight);
+    const x = (video.videoWidth - size) / 2;
+    const y = (video.videoHeight - size) / 2;
     
-    // 在畫布上繪製當前視頻幀
+    // 設置畫布為正方形
+    canvas.width = size;
+    canvas.height = size;
+    
+    // 在畫布上繪製當前視頻幀，使用正方形裁剪區域
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(
+      video, 
+      x, y, size, size, // 源圖像的裁剪區域
+      0, 0, size, size  // 畫布上的繪製區域
+    );
     
     // 將畫布轉換為數據 URL
-    const photoURL = canvas.toDataURL('image/jpeg');
+    const photoURL = canvas.toDataURL('image/jpeg', 0.9);
     
     // 如果有影像元素，設置其源
     if (photoRef.current) {
@@ -186,30 +278,41 @@ const Camera = () => {
     setError(''); // 清除之前的錯誤
     
     try {
-      // 在實際應用中，這裡會將食物記錄保存到數據庫
+      // 獲取當前用戶ID
+      const userId = user ? user.user_id : 1; // 默認用戶ID為1
+      
+      // 準備食物記錄數據
       const today = new Date();
       const dateString = today.toISOString().split('T')[0]; // 格式化為 YYYY-MM-DD
       
-      // 修復當識別結果不是蘋果時的問題
-      // 使用實際識別到的食物名稱和營養信息
-      await saveFoodRecord({
-        user_id: user.user_id,
+      // 獲取照片URL
+      const imageUrl = photoRef.current ? photoRef.current.src : null;
+      
+      // 調用保存函數
+      const success = await saveFoodRecord({
+        user_id: userId,
         food_name: recognizedFood.name,
-        calories: nutritionInfo.calories,
-        protein: nutritionInfo.protein,
-        carbs: nutritionInfo.carbs,
-        fat: nutritionInfo.fat,
+        calories: nutritionInfo.calories || 0,
+        protein: nutritionInfo.protein || 0,
+        carbs: nutritionInfo.carbs || 0,
+        fat: nutritionInfo.fat || 0,
         quantity: 1,
-        meal_type: getCurrentMealType(),
+        meal_type: mealType,
         record_date: dateString,
-        // 如果有照片 URL，也可以保存
-        image_url: photoRef.current ? photoRef.current.src : null
+        image_url: imageUrl
       });
       
-      console.log('食物記錄保存成功，導航到首頁');
-      
-      // 返回到首頁
-      navigate('/home');
+      if (success) {
+        console.log('食物記錄保存成功');
+        // 顯示成功提示
+        showSuccessMessage(`${recognizedFood.name} 已成功記錄`, 'camera');
+        // 重置相機狀態
+        setTimeout(() => {
+          retakePhoto();
+        }, 2000);
+      } else {
+        setError('保存食物記錄失敗，請稍後再試');
+      }
     } catch (error) {
       console.error('保存食物記錄失敗:', error);
       setError(`保存食物記錄失敗: ${error.message || '請稍後再試'}`);
@@ -244,6 +347,11 @@ const Camera = () => {
     };
     
     reader.readAsDataURL(file);
+    
+    // 重置文件輸入，以便用戶可以再次選擇同一個文件
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
   
   // 模擬食物識別
@@ -385,31 +493,37 @@ const Camera = () => {
     }
     
     try {
-      // 在實際應用中，這裡會將食物記錄保存到數據庫
+      // 獲取當前用戶ID
+      const userId = user ? user.user_id : 1; // 默認用戶ID為1
+      
+      // 準備食物記錄數據
       const today = new Date();
       const dateString = today.toISOString().split('T')[0]; // 格式化為 YYYY-MM-DD
       
-      // 假設有一個函數將記錄保存到數據庫
-      await saveFoodRecord({
-        user_id: user.user_id,
+      // 調用保存函數
+      const success = await saveFoodRecord({
+        user_id: userId,
         food_name: foodName,
-        calories: parseInt(calories),
+        calories: parseInt(calories) || 0,
         protein: protein ? parseFloat(protein) : 0,
         carbs: carbs ? parseFloat(carbs) : 0,
         fat: fat ? parseFloat(fat) : 0,
         quantity: parseFloat(quantity) || 1,
-        meal_type: getCurrentMealType(),
+        meal_type: mealType,
         record_date: dateString
       });
       
-      // 重置表單
-      resetFoodForm();
-      
-      // 返回到首頁
-      navigate('/home');
+      if (success) {
+        // 顯示成功提示
+        showSuccessMessage(`${foodName} 已成功記錄`, 'input');
+        // 重置表單
+        resetFoodForm();
+      } else {
+        setError('保存食物記錄失敗，請稍後再試');
+      }
     } catch (error) {
       console.error('保存食物記錄失敗:', error);
-      setError('保存食物記錄失敗，請稍後再試');
+      setError(`保存食物記錄失敗: ${error.message}`);
     }
   };
   
@@ -429,341 +543,222 @@ const Camera = () => {
   // 保存食物記錄到數據庫
   const saveFoodRecord = async (foodRecord) => {
     try {
-      // 首先檢查數據庫中是否已經有食物項目表
-      const checkTableResult = await checkTableExists('food_items');
-      if (!checkTableResult) {
-        console.log('食物項目表不存在，創建表...');
-        await createFoodItemsTable();
-      }
-
-      // 檢查是否有相應的食物項目，如果沒有則創建
-      let foodItemId = null;
-      try {
-        const foodItemResult = await database.executeSql(
-          'SELECT food_id FROM food_items WHERE name = ?',
-          [foodRecord.food_name]
-        );
-        
-        if (foodItemResult.rows.length > 0) {
-          // 使用現有的食物項目
-          foodItemId = foodItemResult.rows.item(0).food_id;
-          console.log('找到現有食物項目：', foodRecord.food_name, foodItemId);
-        }
-      } catch (error) {
-        console.error('查詢食物項目時出錯:', error);
-        // 繼續執行，我們會在下面創建新的食物項目
+      console.log('開始保存食物記錄...', foodRecord);
+      
+      // 確保數據庫已初始化
+      if (!database) {
+        console.error('數據庫對象不存在');
+        throw new Error('數據庫對象不存在');
       }
       
-      if (!foodItemId) {
-        console.log('創建新食物項目:', foodRecord.food_name);
-        // 創建新的食物項目
+      if (!database.db) {
+        console.log('數據庫未初始化，正在初始化...');
         try {
-          const transaction = database.db.transaction(['food_items'], 'readwrite');
-          const store = transaction.objectStore('food_items');
-          
+          await database.openDatabase();
+          console.log('數據庫打開成功');
+        } catch (error) {
+          console.error('打開數據庫失敗:', error);
+          throw new Error('無法打開數據庫: ' + error.message);
+        }
+      }
+      
+      // 檢查必要的表是否存在
+      if (!database.db.objectStoreNames.contains('food_items')) {
+        console.error('food_items 表不存在');
+        throw new Error('food_items 表不存在，請確保數據庫結構正確');
+      }
+      
+      if (!database.db.objectStoreNames.contains('food_records')) {
+        console.error('food_records 表不存在');
+        throw new Error('food_records 表不存在，請確保數據庫結構正確');
+      }
+      
+      // 檢查食物項目是否存在
+      console.log(`查詢食物項目: ${foodRecord.food_name}`);
+      let foodItem = null;
+      try {
+        const foodItems = await database.query('food_items', { name: foodRecord.food_name }, 'name');
+        console.log('查詢結果:', foodItems);
+        foodItem = foodItems.length > 0 ? foodItems[0] : null;
+      } catch (error) {
+        console.error('查詢食物項目失敗:', error);
+        throw new Error('查詢食物項目失敗: ' + error.message);
+      }
+      
+      // 如果食物項目不存在，創建新的食物項目
+      let foodId;
+      if (!foodItem) {
+        console.log(`創建新的食物項目: ${foodRecord.food_name}`);
+        try {
+          // 使用提供的營養信息或默認值
           const newFoodItem = {
             name: foodRecord.food_name,
-            calories: foodRecord.calories,
+            calories: foodRecord.calories || 0,
             protein: foodRecord.protein || 0,
             carbs: foodRecord.carbs || 0,
             fat: foodRecord.fat || 0,
-            fiber: 0,
-            serving_size: 100,
-            created_at: new Date()
+            fiber: 0 // 默認值
           };
           
-          // 添加新食物項目並獲取 ID
-          await new Promise((resolve, reject) => {
-            const request = store.add(newFoodItem);
-            
-            request.onsuccess = (event) => {
-              foodItemId = event.target.result;
-              console.log('新食物項目創建成功，ID:', foodItemId);
-              resolve();
-            };
-            
-            request.onerror = (event) => {
-              console.error('添加食物項目時出錯:', event.target.error);
-              reject(event.target.error);
-            };
-            
-            transaction.oncomplete = () => {
-              console.log('食物項目事務完成');
-              resolve();
-            };
-            
-            transaction.onerror = (event) => {
-              console.error('食物項目事務出錯:', event.target.error);
-              reject(event.target.error);
-            };
-          });
+          console.log('新食物項目數據:', newFoodItem);
+          foodId = await database.addItem('food_items', newFoodItem);
+          console.log(`新食物項目創建成功，ID: ${foodId}`);
+          
+          if (!foodId) {
+            throw new Error('創建食物項目失敗: 未返回ID');
+          }
         } catch (error) {
-          console.error('創建食物項目時出錯:', error);
-          throw new Error('創建食物項目失敗');
+          console.error('創建食物項目失敗:', error);
+          throw new Error('創建食物項目失敗: ' + error.message);
         }
+      } else {
+        foodId = foodItem.food_id;
+        console.log(`使用現有食物項目，ID: ${foodId}`);
       }
       
-      if (!foodItemId) {
-        throw new Error('無法獲取或創建食物項目 ID');
-      }
+      // 獲取當前用戶ID
+      const userId = foodRecord.user_id || 1; // 默認用戶ID為1
       
-      // 檢查是否有食物記錄表
-      const checkRecordTableResult = await checkTableExists('food_records');
-      if (!checkRecordTableResult) {
-        console.log('食物記錄表不存在，創建表...');
-        await createFoodRecordsTable();
-      }
+      // 構建記錄對象
+      const recordDate = foodRecord.record_date || new Date().toISOString().split('T')[0]; // 格式: YYYY-MM-DD
+      const newRecord = {
+        user_id: userId,
+        food_id: foodId,
+        record_date: recordDate,
+        meal_type: foodRecord.meal_type || 'lunch', // 默認為午餐
+        quantity: foodRecord.quantity || 1,
+        calories_consumed: Math.round((foodRecord.calories || 0) * (foodRecord.quantity || 1)),
+        notes: `${foodRecord.food_name} ${foodRecord.quantity || 1} 份`,
+        image_url: foodRecord.image_url || null,
+        created_at: new Date(),
+        updated_at: new Date()
+      };
       
-      console.log('開始創建食物記錄:', foodRecord.food_name);
+      console.log('保存食物記錄:', newRecord);
       
-      // 創建食物記錄
+      // 添加食物記錄
       try {
-        const transaction = database.db.transaction(['food_records'], 'readwrite');
-        const store = transaction.objectStore('food_records');
+        const recordId = await database.addItem('food_records', newRecord);
+        console.log(`食物記錄保存成功，ID: ${recordId}`);
         
-        const newRecord = {
-          user_id: foodRecord.user_id,
-          food_id: foodItemId,
-          record_date: foodRecord.record_date,
-          meal_type: foodRecord.meal_type,
-          quantity: foodRecord.quantity,
-          calories_consumed: Math.round(foodRecord.calories * foodRecord.quantity),
-          notes: `${foodRecord.food_name} ${foodRecord.quantity} 份`,
-          image_url: foodRecord.image_url || null,
-          created_at: new Date(),
-          updated_at: new Date()
-        };
+        if (!recordId) {
+          throw new Error('保存食物記錄失敗: 未返回ID');
+        }
         
-        console.log('新增食物記錄數據:', newRecord);
-        
-        // 添加食物記錄
-        await new Promise((resolve, reject) => {
-          const request = store.add(newRecord);
+        // 更新每日卡路里攝入量
+        try {
+          // 檢查是否存在當日記錄
+          const dailyRecordKey = [userId, recordDate];
+          console.log('查詢每日記錄:', dailyRecordKey);
           
-          request.onsuccess = () => {
-            console.log('食物記錄創建成功');
-            resolve();
-          };
-          
-          request.onerror = (event) => {
-            console.error('添加食物記錄時出錯:', event.target.error);
-            reject(event.target.error);
-          };
-          
-          transaction.oncomplete = () => {
-            console.log('食物記錄事務完成');
-            resolve();
-          };
-          
-          transaction.onerror = (event) => {
-            console.error('食物記錄事務出錯:', event.target.error);
-            reject(event.target.error);
-          };
-        });
-      } catch (error) {
-        console.error('創建食物記錄時出錯:', error);
-        throw new Error('創建食物記錄失敗');
-      }
-      
-      // 檢查是否有每日記錄表
-      const checkDailyTableResult = await checkTableExists('daily_records');
-      if (!checkDailyTableResult) {
-        console.log('每日記錄表不存在，創建表...');
-        await createDailyRecordsTable();
-      }
-      
-      // 更新每日記錄中的總卡路里攝入量
-      await updateDailyCaloriesConsumed(foodRecord.user_id, foodRecord.record_date);
-      
-      console.log('食物記錄保存成功');
-      return true;
-    } catch (error) {
-      console.error('保存食物記錄失敗:', error);
-      throw error;
-    }
-  };
-  
-  // 檢查表是否存在
-  const checkTableExists = async (tableName) => {
-    try {
-      // 在 IndexedDB 中檢查表是否存在
-      return database.db.objectStoreNames.contains(tableName);
-    } catch (error) {
-      console.error(`檢查表 ${tableName} 是否存在時出錯:`, error);
-      return false;
-    }
-  };
-  
-  // 創建食物項目表
-  const createFoodItemsTable = async () => {
-    try {
-      // 在實際應用中，表結構應該在數據庫初始化時創建
-      // 這裡只是為了防止錯誤，提供一個備用方案
-      console.warn('嘗試在運行時創建食物項目表，這不是推薦的做法');
-      
-      // 由於 IndexedDB 不能在運行時創建對象存儲，我們嘗試重新打開數據庫以增加版本號
-      const currentVersion = database.db.version;
-      database.db.close();
-      
-      const request = indexedDB.open(database.DB_NAME, currentVersion + 1);
-      
-      return new Promise((resolve, reject) => {
-        request.onupgradeneeded = (event) => {
-          const db = event.target.result;
-          
-          if (!db.objectStoreNames.contains('food_items')) {
-            const foodStore = db.createObjectStore('food_items', { keyPath: 'food_id', autoIncrement: true });
-            foodStore.createIndex('name', 'name', { unique: false });
+          // 檢查 daily_records 表是否存在
+          if (!database.db.objectStoreNames.contains('daily_records')) {
+            console.error('daily_records 表不存在');
+            throw new Error('daily_records 表不存在，請確保數據庫結構正確');
           }
-        };
-        
-        request.onsuccess = () => {
-          database.db = request.result;
-          resolve(true);
-        };
-        
-        request.onerror = (event) => {
-          reject(event.target.error);
-        };
-      });
-    } catch (error) {
-      console.error('創建食物項目表失敗:', error);
-      return false;
-    }
-  };
-  
-  // 創建食物記錄表
-  const createFoodRecordsTable = async () => {
-    try {
-      console.warn('嘗試在運行時創建食物記錄表，這不是推薦的做法');
-      
-      const currentVersion = database.db.version;
-      database.db.close();
-      
-      const request = indexedDB.open(database.DB_NAME, currentVersion + 1);
-      
-      return new Promise((resolve, reject) => {
-        request.onupgradeneeded = (event) => {
-          const db = event.target.result;
           
-          if (!db.objectStoreNames.contains('food_records')) {
-            const recordStore = db.createObjectStore('food_records', { keyPath: 'record_id', autoIncrement: true });
-            recordStore.createIndex('user_id', 'user_id', { unique: false });
-            recordStore.createIndex('food_id', 'food_id', { unique: false });
-            recordStore.createIndex('record_date', 'record_date', { unique: false });
-            recordStore.createIndex('user_date', ['user_id', 'record_date'], { unique: false });
+          // 獲取 daily_records 表的鍵路徑
+          const transaction = database.db.transaction(['daily_records'], 'readonly');
+          const store = transaction.objectStore('daily_records');
+          const keyPath = store.keyPath;
+          console.log('daily_records 表的鍵路徑:', keyPath);
+          
+          // 嘗試獲取每日記錄
+          let dailyRecord = null;
+          try {
+            dailyRecord = await database.getItem('daily_records', dailyRecordKey);
+            console.log('每日記錄查詢結果:', dailyRecord);
+          } catch (error) {
+            console.error('獲取每日記錄失敗:', error);
+            // 如果是因為鍵格式不正確，嘗試使用對象格式
+            if (Array.isArray(keyPath)) {
+              const keyObject = {};
+              keyObject[keyPath[0]] = userId;
+              keyObject[keyPath[1]] = recordDate;
+              console.log('使用對象格式的鍵:', keyObject);
+              try {
+                dailyRecord = await database.getItem('daily_records', keyObject);
+                console.log('使用對象格式獲取的每日記錄:', dailyRecord);
+              } catch (innerError) {
+                console.error('使用對象格式獲取每日記錄失敗:', innerError);
+              }
+            }
           }
-        };
-        
-        request.onsuccess = () => {
-          database.db = request.result;
-          resolve(true);
-        };
-        
-        request.onerror = (event) => {
-          reject(event.target.error);
-        };
-      });
-    } catch (error) {
-      console.error('創建食物記錄表失敗:', error);
-      return false;
-    }
-  };
-  
-  // 創建每日記錄表
-  const createDailyRecordsTable = async () => {
-    try {
-      console.warn('嘗試在運行時創建每日記錄表，這不是推薦的做法');
-      
-      const currentVersion = database.db.version;
-      database.db.close();
-      
-      const request = indexedDB.open(database.DB_NAME, currentVersion + 1);
-      
-      return new Promise((resolve, reject) => {
-        request.onupgradeneeded = (event) => {
-          const db = event.target.result;
           
-          if (!db.objectStoreNames.contains('daily_records')) {
-            const dailyStore = db.createObjectStore('daily_records', { keyPath: 'record_id', autoIncrement: true });
-            dailyStore.createIndex('user_id', 'user_id', { unique: false });
-            dailyStore.createIndex('record_date', 'record_date', { unique: false });
-            dailyStore.createIndex('user_date', ['user_id', 'record_date'], { unique: true });
-          }
-        };
-        
-        request.onsuccess = () => {
-          database.db = request.result;
-          resolve(true);
-        };
-        
-        request.onerror = (event) => {
-          reject(event.target.error);
-        };
-      });
-    } catch (error) {
-      console.error('創建每日記錄表失敗:', error);
-      return false;
-    }
-  };
-  
-  // 更新每日記錄中的總卡路里攝入量
-  const updateDailyCaloriesConsumed = async (userId, date) => {
-    try {
-      console.log('更新每日總卡路里攝入量:', userId, date);
-      
-      // 直接添加/更新每日記錄，而不嘗試計算總卡路里
-      // 這是為了避免可能的數據庫讀取問題
-      const transaction = database.db.transaction(['daily_records'], 'readwrite');
-      const store = transaction.objectStore('daily_records');
-      
-      // 使用複合索引查找記錄
-      const index = store.index('user_date');
-      const request = index.get([userId, date]);
-      
-      return new Promise((resolve, reject) => {
-        request.onsuccess = (event) => {
-          const record = event.target.result;
-          
-          if (record) {
-            // 更新現有記錄 - 這裡我們不更新卡路里計數，只標記為已更新
-            record.updated_at = new Date();
-            store.put(record);
-            console.log('更新現有每日記錄');
+          if (dailyRecord) {
+            // 更新現有記錄
+            const updatedCalories = (dailyRecord.total_calories || 0) + (foodRecord.calories || 0);
+            console.log('更新每日卡路里:', updatedCalories);
+            
+            // 創建更新對象
+            const updateData = { total_calories: updatedCalories };
+            
+            try {
+              await database.updateItem('daily_records', updateData, dailyRecordKey);
+              console.log('每日記錄更新成功');
+            } catch (error) {
+              console.error('更新每日記錄失敗:', error);
+              // 如果是因為鍵格式不正確，嘗試使用對象格式
+              if (Array.isArray(keyPath)) {
+                const keyObject = {};
+                keyObject[keyPath[0]] = userId;
+                keyObject[keyPath[1]] = recordDate;
+                console.log('使用對象格式的鍵進行更新:', keyObject);
+                try {
+                  // 確保更新對象包含鍵值
+                  const fullUpdateData = { 
+                    ...updateData,
+                    [keyPath[0]]: userId,
+                    [keyPath[1]]: recordDate
+                  };
+                  await database.updateItem('daily_records', fullUpdateData);
+                  console.log('使用對象格式更新每日記錄成功');
+                } catch (innerError) {
+                  console.error('使用對象格式更新每日記錄失敗:', innerError);
+                }
+              }
+            }
           } else {
-            // 創建新記錄
-            store.add({
+            // 創建新的每日記錄
+            const newDailyRecord = {
               user_id: userId,
-              record_date: date,
-              total_calories_consumed: 0, // 將在應用程序啟動時重新計算
-              total_calories_burned: 0,
-              water_intake: 0,
-              created_at: new Date(),
-              updated_at: new Date()
-            });
-            console.log('創建新每日記錄');
+              record_date: recordDate,
+              total_calories: foodRecord.calories || 0,
+              total_protein: foodRecord.protein || 0,
+              total_carbs: foodRecord.carbs || 0,
+              total_fat: foodRecord.fat || 0
+            };
+            console.log('創建新的每日記錄:', newDailyRecord);
+            
+            try {
+              await database.addItem('daily_records', newDailyRecord);
+              console.log('新每日記錄創建成功');
+            } catch (error) {
+              console.error('創建新每日記錄失敗:', error);
+            }
           }
-        };
+          console.log('每日卡路里攝入量更新完成');
+        } catch (error) {
+          console.error('更新每日卡路里攝入量失敗:', error);
+          // 不中斷流程，繼續執行
+        }
         
-        request.onerror = (event) => {
-          console.error('查詢每日記錄時出錯:', event.target.error);
-          reject(event.target.error);
-        };
-        
-        transaction.oncomplete = () => {
-          console.log('每日記錄更新完成');
-          resolve();
-        };
-        
-        transaction.onerror = (event) => {
-          console.error('每日記錄事務出錯:', event.target.error);
-          reject(event.target.error);
-        };
-      });
+        console.log('食物記錄保存完成');
+        return true;
+      } catch (error) {
+        console.error('保存食物記錄失敗:', error);
+        throw new Error('保存食物記錄失敗: ' + error.message);
+      }
     } catch (error) {
-      console.error('更新每日總卡路里攝入量失敗:', error);
-      // 不要拋出錯誤，讓保存過程繼續
+      console.error('保存食物記錄過程中發生錯誤:', error);
+      setError(`保存食物記錄失敗: ${error.message}`);
+      return false;
     }
+  };
+  
+  // 處理用餐項目變更
+  const handleMealTypeChange = (e) => {
+    setMealType(e.target.value);
   };
 
   // 渲染不同視圖
@@ -780,11 +775,83 @@ const Camera = () => {
     }
   };
 
+  // 渲染成功提示彈窗
+  const renderSuccessPopup = () => {
+    if (!showSuccess) return null;
+    
+    return (
+      <div className="success-popup">
+        <h3>恭喜輸入一筆成功</h3>
+        <p>{successMessage}</p>
+        <button className="close-btn" onClick={() => setShowSuccess(false)}>
+          關閉
+        </button>
+      </div>
+    );
+  };
+
+  // 顯示成功提示並設置自動關閉
+  const showSuccessMessage = (message, viewType) => {
+    setSuccessMessage(message || '食物記錄已成功保存');
+    setShowSuccess(true);
+    
+    // 1秒後自動關閉提示並重置相關視圖
+    setTimeout(() => {
+      setShowSuccess(false);
+      
+      // 根據不同的視圖類型重置不同的狀態
+      switch (viewType) {
+        case 'camera':
+          retakePhoto();
+          break;
+        case 'upload':
+          setSelectedImage(null);
+          setRecognizedFood(null);
+          setNutritionInfo(null);
+          setProcessStatus('waiting');
+          break;
+        case 'input':
+          resetFoodForm();
+          break;
+        default:
+          break;
+      }
+    }, 1000);
+  };
+
   // 渲染拍照視圖
   const renderCameraView = () => {
     return (
       <div className="camera-view">
-        {error && <div className="camera-error">{error}</div>}
+        {error && (
+          <div className="camera-error">
+            <FontAwesomeIcon icon="exclamation-circle" className="error-icon" />
+            <div className="error-content">
+              <p>{error}</p>
+              <button 
+                className="switch-upload-btn"
+                onClick={showUploadView}
+              >
+                <FontAwesomeIcon icon="upload" /> 切換到上傳
+              </button>
+            </div>
+          </div>
+        )}
+        
+        <div className="camera-header">
+          <div className="meal-type-selector">
+            <select 
+              className="meal-type-select" 
+              value={mealType} 
+              onChange={handleMealTypeChange}
+            >
+              <option value="早餐">早餐</option>
+              <option value="午餐">午餐</option>
+              <option value="晚餐">晚餐</option>
+              <option value="點心(或消夜)">點心(或消夜)</option>
+            </select>
+          </div>
+        </div>
         
         {!photoTaken ? (
           // 相機預覽
@@ -795,6 +862,7 @@ const Camera = () => {
               playsInline 
               muted 
               className={`camera-video ${cameraReady ? 'active' : ''}`}
+              style={{ aspectRatio: '1/1', objectFit: 'cover' }}
             ></video>
             {!cameraReady && !error && (
               <div className="camera-loading">
@@ -803,7 +871,14 @@ const Camera = () => {
               </div>
             )}
             <div className="camera-overlay">
-              <div className="food-outline"></div>
+              <div className="food-outline">
+                <div className="focus-corners">
+                  <span className="corner top-left"></span>
+                  <span className="corner top-right"></span>
+                  <span className="corner bottom-left"></span>
+                  <span className="corner bottom-right"></span>
+                </div>
+              </div>
             </div>
             <button 
               className="camera-capture-btn"
@@ -812,6 +887,7 @@ const Camera = () => {
             >
               <div className="camera-capture-btn-inner"></div>
             </button>
+            <div className="bottom-spacer"></div>
           </div>
         ) : (
           // 照片預覽和處理結果
@@ -887,6 +963,21 @@ const Camera = () => {
     return (
       <div className="upload-view">
         {error && <div className="camera-error">{error}</div>}
+        
+        <div className="upload-header">
+          <div className="meal-type-selector">
+            <select 
+              className="meal-type-select" 
+              value={mealType} 
+              onChange={handleMealTypeChange}
+            >
+              <option value="早餐">早餐</option>
+              <option value="午餐">午餐</option>
+              <option value="晚餐">晚餐</option>
+              <option value="點心(或消夜)">點心(或消夜)</option>
+            </select>
+          </div>
+        </div>
         
         <div className="upload-container">
           {!selectedImage ? (
@@ -979,7 +1070,21 @@ const Camera = () => {
   const renderInputView = () => {
     return (
       <div className="input-view">
-        <h2 className="input-title">手動輸入食物記錄</h2>
+        <div className="input-header">
+          <h2 className="input-title">手動輸入食物記錄</h2>
+          <div className="meal-type-selector">
+            <select 
+              className="meal-type-select" 
+              value={mealType} 
+              onChange={handleMealTypeChange}
+            >
+              <option value="早餐">早餐</option>
+              <option value="午餐">午餐</option>
+              <option value="晚餐">晚餐</option>
+              <option value="點心(或消夜)">點心(或消夜)</option>
+            </select>
+          </div>
+        </div>
         
         {error && <div className="input-error">{error}</div>}
         
@@ -1130,6 +1235,9 @@ const Camera = () => {
       
       {/* 視圖內容 */}
       {renderView()}
+      
+      {/* 成功提示彈窗 */}
+      {renderSuccessPopup()}
     </div>
   );
 };

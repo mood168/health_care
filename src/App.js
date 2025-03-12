@@ -22,7 +22,6 @@ import Social from './pages/Social';
 import Settings from './pages/Settings';
 
 // 共用組件
-import StatusBar from './components/StatusBar';
 import TabBar from './components/TabBar';
 
 // 添加所有Font Awesome圖標到庫中
@@ -119,8 +118,6 @@ function App() {
   return (
     <UserProvider>
       <div className="app-container">
-        <StatusBar />
-        
         <Routes>
           <Route path="/" element={<Welcome />} />
           <Route path="/welcome" element={<Welcome />} />

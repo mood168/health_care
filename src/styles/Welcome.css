@@ -1,13 +1,11 @@
 .welcome-container {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 24px;
-  position: relative;
-  overflow: hidden;
-  height: 100%;
-  background-color: var(--card-background);
-  padding-top: 60px; /* 為 StatusBar 留出空間 */
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  background-color: var(--background-color);
 }
 
 .welcome-content {

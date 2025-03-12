@@ -65,13 +65,13 @@ const Register = () => {
     setError('');
     
     try {
-      await register(username, email, password);
+      const result = await register(username, email, password);
       setSuccess(true);
       
-      // 註冊成功後延遲導航到登錄頁面
+      // 註冊成功後直接導航到個人資料頁面
       setTimeout(() => {
-        navigate('/');
-      }, 2000);
+        navigate('/profile', { state: { fromLogin: true, requireProfile: true } });
+      }, 1000);
     } catch (err) {
       setError(err.message || '註冊失敗，請稍後再試');
     } finally {
@@ -87,7 +87,7 @@ const Register = () => {
         {success ? (
           <div className="success-message">
             <FontAwesomeIcon icon="check-circle" />
-            <p>註冊成功！即將跳轉到登錄頁面...</p>
+            <p>註冊成功！即將跳轉到會員區...</p>
           </div>
         ) : (
           <form className="register-form" onSubmit={handleRegister}>

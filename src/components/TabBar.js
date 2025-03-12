@@ -8,9 +8,9 @@ const TabBar = () => {
   
   // 定義標籤項
   const tabs = [
-    { name: '首頁', icon: 'home', path: '/home' },
-    { name: '拍照', icon: 'camera', path: '/camera' },
     { name: '紀錄', icon: 'clipboard-list', path: '/record' },
+    { name: '拍照', icon: 'camera', path: '/camera' },
+    { name: '首頁', icon: 'home', path: '/home' },
     { name: '社群', icon: 'users', path: '/social' },
     { name: '會員', icon: 'user', path: '/profile' }
   ];

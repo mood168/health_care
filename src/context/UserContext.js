@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import database from '../utils/database';
+import initializeDatabase from '../utils/initDb';
 
 // 創建用戶上下文
 const UserContext = createContext();
@@ -9,10 +10,33 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [hasProfile, setHasProfile] = useState(false);
+  const [dbInitialized, setDbInitialized] = useState(false);
+
+  // 初始化數據庫
+  useEffect(() => {
+    const initDb = async () => {
+      try {
+        console.log('正在初始化數據庫...');
+        if (!database.db) {
+          await initializeDatabase();
+        }
+        setDbInitialized(true);
+        console.log('數據庫初始化完成');
+      } catch (error) {
+        console.error('數據庫初始化失敗:', error);
+      }
+    };
+
+    initDb();
+  }, []);
 
   // 初始化 - 從本地存儲加載用戶數據
   useEffect(() => {
     const loadUser = async () => {
+      if (!dbInitialized) {
+        return; // 等待數據庫初始化完成
+      }
+
       try {
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
@@ -30,12 +54,21 @@ export const UserProvider = ({ children }) => {
     };
 
     loadUser();
-  }, []);
+  }, [dbInitialized]); // 當數據庫初始化狀態改變時重新執行
+
+  // 確保數據庫已打開
+  const ensureDbOpen = async () => {
+    if (!database.db) {
+      console.log('數據庫未打開，正在打開...');
+      await database.openDatabase();
+    }
+  };
 
   // 檢查用戶是否有個人資料
   const checkUserProfile = async (userId) => {
     try {
-      const profile = await database.profileOperations.getProfile(userId);
+      await ensureDbOpen();
+      const profile = await database.getProfile(userId);
       setHasProfile(!!profile);
       return !!profile;
     } catch (error) {
@@ -48,38 +81,52 @@ export const UserProvider = ({ children }) => {
   // 註冊
   const register = async (username, email, password) => {
     try {
-      // 檢查電子郵件是否已被使用
-      const existingUser = await database.userOperations.getUserByEmail(email);
+      await ensureDbOpen();
+      
+      // 檢查郵箱是否已存在
+      const existingUser = await database.getUserByEmail(email);
+      
       if (existingUser) {
-        throw new Error('此電子郵件已被註冊');
+        return { success: false, error: '該郵箱已被註冊' };
       }
       
       // 創建新用戶
-      await database.userOperations.createUser(username, email, password);
+      const userData = {
+        username,
+        email,
+        password_hash: password, // 實際應用中應該使用加密的密碼
+        created_at: new Date(),
+        last_login: new Date()
+      };
       
-      // 註冊成功後自動登入
-      const userResult = await database.userOperations.getUserByEmail(email);
+      const userId = await database.createUser(userData);
+      
+      if (!userId) {
+        throw new Error('創建用戶失敗');
+      }
+      
+      // 獲取新創建的用戶
+      const newUser = await database.getItem('users', userId);
       
       // 保存用戶資料
-      setUser(userResult);
-      localStorage.setItem('user', JSON.stringify(userResult));
+      setUser(newUser);
+      localStorage.setItem('user', JSON.stringify(newUser));
       
-      // 新用戶沒有個人資料
-      setHasProfile(false);
-      
-      return { success: true, user: userResult };
+      return { success: true, user: newUser };
     } catch (error) {
       console.error('註冊失敗:', error);
-      throw error;
+      return { success: false, error: error.message };
     }
   };
 
   // 登入
   const login = async (email, password) => {
     try {
+      await ensureDbOpen();
+      
       // 在實際應用中，這裡應該有真正的登入邏輯，例如API請求
       // 現在只是模擬登入成功
-      const userResult = await database.userOperations.getUserByEmail(email);
+      const userResult = await database.getUserByEmail(email);
       
       if (!userResult) {
         throw new Error('用戶不存在');
@@ -92,17 +139,31 @@ export const UserProvider = ({ children }) => {
         throw new Error('密碼不正確');
       }
       
-      // 更新最後登入時間
-      await database.userOperations.updateLastLogin(userResult.user_id);
-      
-      // 保存用戶資料
-      setUser(userResult);
-      localStorage.setItem('user', JSON.stringify(userResult));
-      
-      // 檢查用戶是否有個人資料
-      const hasUserProfile = await checkUserProfile(userResult.user_id);
-      
-      return { success: true, hasProfile: hasUserProfile, user: userResult };
+      try {
+        // 更新最後登入時間
+        await database.updateUser(userResult.user_id, { last_login: new Date() });
+        
+        // 保存用戶資料
+        const updatedUser = { ...userResult, last_login: new Date() };
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        
+        // 檢查用戶是否有個人資料
+        const hasUserProfile = await checkUserProfile(userResult.user_id);
+        
+        return { success: true, hasProfile: hasUserProfile, user: updatedUser };
+      } catch (updateError) {
+        console.error('更新登入時間失敗，但用戶已驗證:', updateError);
+        
+        // 即使更新失敗，我們仍允許用戶登入
+        setUser(userResult);
+        localStorage.setItem('user', JSON.stringify(userResult));
+        
+        // 檢查用戶是否有個人資料
+        const hasUserProfile = await checkUserProfile(userResult.user_id);
+        
+        return { success: true, hasProfile: hasUserProfile, user: userResult };
+      }
     } catch (error) {
       console.error('登入失敗:', error);
       return { success: false, error: error.message };
@@ -136,7 +197,8 @@ export const UserProvider = ({ children }) => {
     try {
       if (!user) return false;
       
-      await database.userOperations.updateUser(user.user_id, userData);
+      await ensureDbOpen();
+      await database.updateUser(user.user_id, userData);
       
       // 更新本地狀態
       const updatedUser = { ...user, ...userData };
@@ -155,7 +217,8 @@ export const UserProvider = ({ children }) => {
     try {
       if (!user) return false;
       
-      await database.profileOperations.upsertProfile(user.user_id, profileData);
+      await ensureDbOpen();
+      await database.updateProfile(user.user_id, profileData);
       setHasProfile(true);
       
       return true;
@@ -170,7 +233,8 @@ export const UserProvider = ({ children }) => {
     try {
       if (!user) return null;
       
-      const profile = await database.profileOperations.getProfile(user.user_id);
+      await ensureDbOpen();
+      const profile = await database.getProfile(user.user_id);
       return profile;
     } catch (error) {
       console.error('獲取個人資料失敗:', error);

@@ -25,7 +25,7 @@ const Profile = () => {
     age: '',
     activity_level: 'sedentary',
     tdee: '',
-    daily_calorie_goal: 2000,
+    daily_calorie_goal: 1000,
     avatar: null
   });
   const [achievementDays, setAchievementDays] = useState('');
@@ -49,7 +49,7 @@ const Profile = () => {
             age: userProfile.age || '',
             activity_level: userProfile.activity_level || 'sedentary',
             tdee: userProfile.tdee || '',
-            daily_calorie_goal: userProfile.daily_calorie_goal || 2000,
+            daily_calorie_goal: userProfile.daily_calorie_goal || 1000,
             avatar: userProfile.avatar || null
           });
           
@@ -292,10 +292,7 @@ const Profile = () => {
           );
         }
         
-        // 如果是從登入頁面導航過來，並且需要填寫資料，則導航到首頁
-        if (fromLogin && requireProfile) {
-          navigate('/home');
-        }
+        // 不再導航到首頁，即使是從登入頁面導航過來的用戶
       } else {
         setErrors({ form: '保存個人資料失敗，請稍後再試' });
       }
@@ -516,7 +513,7 @@ const Profile = () => {
                 onChange={handleInputChange}
                 placeholder="卡路里目標"
               />
-            ) : `${profile.daily_calorie_goal || 2000} 卡`}
+            ) : `${profile.daily_calorie_goal || 1000} 卡`}
           </div>
         </div>
 

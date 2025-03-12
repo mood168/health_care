@@ -4,7 +4,6 @@
   flex-direction: column;
   padding: 16px;
   overflow-y: auto;
-  padding-top: 8px; /* 減少頂部間距，因為 StatusBar 已經提供了間距 */
 }
 
 .settings-header {

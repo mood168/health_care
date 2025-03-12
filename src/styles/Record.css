@@ -35,14 +35,14 @@
 }
 
 .meal-section {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .meal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .meal-title {
@@ -51,14 +51,14 @@
 }
 
 .meal-icon {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background-color: var(--primary-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 12px;
+  margin-right: 10px;
   color: white;
 }
 
@@ -72,47 +72,76 @@
   cursor: pointer;
 }
 
-.food-item {
+.food-item, .exercise-item {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   background-color: var(--card-background);
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-.food-image {
-  width: 50px;
-  height: 50px;
-  border-radius: 8px;
+.food-image, .exercise-image {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 6px;
   background-color: #f0f0f0;
-  margin-right: 12px;
+  margin-right: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--light-text-color);
-  font-size: 20px;
+  font-size: 18px;
 }
 
-.food-details {
+.food-details, .exercise-details {
   flex: 1;
-}
-
-.food-actions {
   display: flex;
   align-items: center;
+  justify-content: space-between;
 }
 
-.food-action-button {
-  width: 32px;
-  height: 32px;
+.item-name {
+  font-weight: 500;
+  margin-right: 10px;
+  flex: 2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-quantity {
+  margin-right: 10px;
+  flex: 1;
+  text-align: center;
+}
+
+.item-calories {
+  margin-right: 10px;
+  flex: 1;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.food-actions, .exercise-actions {
+  display: flex;
+  align-items: center;
+  min-width: 70px;
+  justify-content: flex-end;
+}
+
+.food-action-button, .exercise-action-button {
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--light-text-color);
-  margin-left: 8px;
+  margin-left: 6px;
   background: none;
   border: none;
   cursor: pointer;
@@ -146,4 +175,38 @@
   padding-top: 12px;
   border-top: 1px solid var(--border-color);
   font-weight: bold;
+}
+
+/* 運動區塊樣式 */
+.exercise-section {
+  border-radius: 12px;
+  padding: 0;
+  margin-bottom: 24px;
+}
+
+.exercise-icon {
+  background-color: #555555; /* 深灰色，代表運動 */
+}
+
+.exercise-item {
+  background-color: rgba(210, 210, 210, 0.9); /* 加深的灰色背景 */
+}
+
+.exercise-image {
+  background-color: rgba(85, 85, 85, 0.2); /* 淺灰色背景 */
+  color: #555555; /* 深灰色文字 */
+}
+
+/* 深色模式適配 */
+.dark-mode .exercise-section {
+  /* 移除深色模式下的背景色 */
+}
+
+.dark-mode .exercise-item {
+  background-color: rgba(50, 50, 50, 0.9); /* 深色模式下加深的灰色背景 */
+}
+
+.dark-mode .exercise-image {
+  background-color: rgba(85, 85, 85, 0.25); /* 深色模式下的灰色背景 */
+  color: #aaaaaa; /* 深色模式下的淺灰色文字 */
 } 

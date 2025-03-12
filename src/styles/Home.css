@@ -4,7 +4,6 @@
   flex-direction: column;
   padding: 16px;
   overflow-y: auto;
-  padding-top: 8px; /* 減少頂部間距，因為 StatusBar 已經提供了間距 */
 }
 
 .home-header {
@@ -237,12 +236,20 @@
   font-size: 24px;
 }
 
+.streak-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+}
+
+.dark-mode .streak-text {
+  color: white;
+}
+
 .nutrition-card {
-  background-color: var(--card-background);
-  border-radius: 16px;
-  padding: 16px;
+  padding: 16px 0;
   margin-bottom: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  /* 移除背景色、邊框和陰影 */
 }
 
 .nutrition-header {
@@ -338,8 +345,19 @@
 .calories-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 16px;
+}
+
+.weight-prediction {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.prediction-icon {
+  color: var(--success-color);
+  font-size: 14px;
 }
 
 .calories-circle-container {
@@ -424,28 +442,9 @@
   color: var(--warning-color);
 }
 
-.nutrition-distribution {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 16px;
-  margin-bottom: 16px;
-  text-align: center;
-}
-
-.nutrition-distribution-item {
-  flex: 1;
-  padding: 10px;
-}
-
-.nutrition-distribution-value {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 4px;
-}
-
-.nutrition-distribution-label {
-  font-size: 14px;
-  color: var(--light-text-color);
+.calories-stat-value.large {
+  font-size: 18px;
+  font-weight: 700;
 }
 
 .exercise-card {
@@ -568,4 +567,224 @@
 .loading-indicator p {
   font-size: 16px;
   font-weight: 500;
+}
+
+/* 圖表卡片樣式 */
+.chart-card {
+  background-color: var(--card-background);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.chart-container {
+  height: 200px;
+  margin-top: 16px;
+  position: relative;
+}
+
+/* 深色模式適配 */
+.dark-mode .chart-card {
+  background-color: var(--dark-card-background);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+  .chart-container {
+    height: 180px;
+  }
+  
+  .chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .chart-header p {
+    margin-top: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .chart-container {
+    height: 160px;
+  }
+}
+
+/* 營養攝取網格佈局 - 四個項目並排 */
+.nutrition-grid-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.nutrition-item-compact {
+  flex: 1;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.nutrition-icon-small {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.nutrition-label {
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+
+.nutrition-value {
+  font-size: 12px;
+  margin-bottom: 4px;
+  color: var(--text-color);
+}
+
+.nutrition-item-compact .progress-bar {
+  width: 100%;
+  height: 6px;
+  margin-top: 2px;
+}
+
+/* 深色模式適配 */
+.dark-mode .nutrition-item-compact {
+  /* 移除深色模式下的背景色 */
+}
+
+/* 響應式調整 */
+@media (max-width: 360px) {
+  .nutrition-grid-row {
+    flex-wrap: wrap;
+  }
+  
+  .nutrition-item-compact {
+    flex: 0 0 calc(50% - 4px);
+    margin-bottom: 8px;
+  }
+}
+
+/* 營養攝取列表佈局 */
+.nutrition-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nutrition-item-horizontal {
+  display: flex;
+  align-items: center;
+  background-color: var(--background-color);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.nutrition-content {
+  flex: 1;
+  margin-left: 10px;
+}
+
+.nutrition-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.nutrition-label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.nutrition-value {
+  font-size: 14px;
+  color: var(--text-color);
+}
+
+/* 深色模式適配 */
+.dark-mode .nutrition-item-horizontal {
+  background-color: rgba(50, 50, 50, 0.5);
+}
+
+/* 建議卡片樣式 */
+.suggestion-header {
+  margin-bottom: 16px;
+}
+
+.suggestion-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.suggestion-subtitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--text-color);
+}
+
+.suggestion-section {
+  margin-bottom: 8px;
+}
+
+/* 運動建議樣式 */
+.exercise-suggestion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.exercise-item-small {
+  display: flex;
+  align-items: center;
+  background-color: var(--background-color);
+  border-radius: 10px;
+  padding: 10px;
+  width: calc(50% - 5px);
+}
+
+.exercise-icon-small {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: rgba(85, 85, 85, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  color: #555555;
+  font-size: 16px;
+}
+
+.exercise-info-small {
+  flex: 1;
+}
+
+/* 深色模式適配 */
+.dark-mode .exercise-item-small {
+  background-color: rgba(50, 50, 50, 0.5);
+}
+
+.dark-mode .exercise-icon-small {
+  background-color: rgba(85, 85, 85, 0.25);
+  color: #aaaaaa;
 } 

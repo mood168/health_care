@@ -32,8 +32,10 @@ const preloadUsers = async () => {
         target_weight: 65,
         gender: 'male',
         birth_date: '1990-01-01',
-        activity_level: 'medium',
-        daily_calorie_goal: 2000
+        age: 33,
+        activity_level: 'moderate',
+        tdee: 2500,
+        daily_calorie_goal: 1000
       });
       
       console.log('測試用戶數據加載完成！');
