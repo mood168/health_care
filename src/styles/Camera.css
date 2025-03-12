@@ -41,12 +41,24 @@
   background-color: #ffffff;
 }
 
+/* 用餐類型選擇器增強樣式 */
+.meal-type-selector {
+  padding: 10px;
+  background-color: #f8f8f8;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
 .meal-type-select {
   width: 100%;
-  padding: 10px;
+  min-width: 150px;
+  padding: 10px 15px;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   font-size: 16px;
+  background-color: #ffffff;
+  color: #333333;
+  appearance: menulist; /* 確保在所有瀏覽器中顯示下拉箭頭 */
 }
 
 .camera-preview {
@@ -604,9 +616,13 @@
     background-color: #1e1e1e;
   }
 
+  .meal-type-selector {
+    background-color: #2a2a2a;
+  }
+
   .meal-type-select {
-    background-color: #1e1e1e;
-    border-color: #333333;
+    background-color: #333333;
+    border-color: #555555;
     color: #ffffff;
   }
 
@@ -652,4 +668,358 @@
   position: absolute;
   bottom: 0;
   left: 0;
+}
+
+/* 設置界面 */
+.settings-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.settings-container {
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.settings-container h3 {
+  margin-top: 0;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+  text-align: center;
+  color: #333;
+}
+
+/* 開關切換按鈕 */
+.toggle-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: #4CAF50;
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(24px);
+}
+
+.form-hint {
+  font-size: 12px;
+  color: #666;
+  margin-top: 5px;
+  margin-bottom: 15px;
+}
+
+.settings-tab {
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+/* 錯誤訊息樣式 */
+.error-message {
+  background-color: rgba(255, 0, 0, 0.1);
+  border-left: 4px solid #ff3b30;
+  color: #d50000;
+  padding: 10px 15px;
+  margin: 10px 0;
+  border-radius: 4px;
+  display: flex;
+  align-items: flex-start;
+  max-width: 100%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.error-icon {
+  margin-right: 10px;
+  font-size: 18px;
+  color: #ff3b30;
+}
+
+.error-text {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* 相機視圖樣式改進 */
+.view-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.video-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1/1;
+  overflow: hidden;
+  border-radius: 8px;
+  background-color: #000;
+  margin-bottom: 15px;
+}
+
+.camera-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.camera-video.ready {
+  opacity: 1;
+}
+
+.camera-video.loading {
+  opacity: 0.7;
+}
+
+.camera-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+}
+
+.camera-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.photo-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1/1;
+  overflow: hidden;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.camera-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.camera-controls {
+  display: flex;
+  justify-content: center;
+  margin: 15px 0;
+}
+
+.camera-btn {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background-color: white;
+  border: 3px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+  font-size: 24px;
+  color: #333;
+  cursor: pointer;
+}
+
+.camera-btn.active {
+  border-color: #4caf50;
+}
+
+.camera-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.photo-action-buttons {
+  display: flex;
+  justify-content: space-between;
+  width: 180px;
+}
+
+.retake-btn, .confirm-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: white;
+  cursor: pointer;
+}
+
+.retake-btn {
+  background-color: #f44336;
+}
+
+.confirm-btn {
+  background-color: #4caf50;
+}
+
+.confirm-btn:disabled {
+  background-color: #a5d6a7;
+  cursor: not-allowed;
+}
+
+.recognition-result {
+  padding: 15px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  margin-top: 10px;
+}
+
+.processing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0;
+}
+
+.food-info {
+  padding: 10px;
+}
+
+.food-name {
+  font-size: 24px;
+  color: #333;
+  margin: 10px 0;
+  font-weight: bold;
+}
+
+.nutrition-info {
+  background-color: #f9f9f9;
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+.nutrition-info p {
+  margin: 5px 0;
+}
+
+.error-container {
+  padding: 10px;
+}
+
+.hidden-canvas {
+  display: none;
+}
+
+/* HTTPS提示樣式 */
+.https-warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border-left: 4px solid #ffc107;
+  padding: 10px 15px;
+  margin: 10px 0;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.https-warning a {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+/* 添加自適應手機螢幕的樣式 */
+@media (max-width: 480px) {
+  .camera-btn {
+    width: 60px;
+    height: 60px;
+    font-size: 20px;
+  }
+  
+  .retake-btn, .confirm-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 18px;
+  }
+  
+  .photo-action-buttons {
+    width: 150px;
+  }
+  
+  .error-message {
+    padding: 8px 12px;
+  }
 } 

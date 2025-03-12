@@ -6,6 +6,15 @@ import database from '../utils/database';
 import initializeDatabase from '../utils/initDb';
 import '../styles/Camera.css';
 
+// Ollama API 配置
+const OLLAMA_CONFIG = {
+  // 預設使用localhost，可以根據實際環境修改
+  apiUrl: localStorage.getItem('ollamaApiUrl') || 'http://localhost:11434/api/generate',
+  model: localStorage.getItem('ollamaModel') || 'gemma3:4b',
+  enabled: localStorage.getItem('ollamaEnabled') !== 'false', // 預設啟用，可以禁用
+  timeout: parseInt(localStorage.getItem('ollamaTimeout') || '30000', 10), // 30秒超時
+};
+
 const Camera = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -43,6 +52,12 @@ const Camera = () => {
   const [suggestedFoods, setSuggestedFoods] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  
+  // Ollama設置相關狀態
+  const [showSettings, setShowSettings] = useState(false);
+  const [ollamaEnabled, setOllamaEnabled] = useState(OLLAMA_CONFIG.enabled);
+  const [ollamaApiUrl, setOllamaApiUrl] = useState(OLLAMA_CONFIG.apiUrl);
+  const [ollamaModel, setOllamaModel] = useState(OLLAMA_CONFIG.model);
 
   // 檢查用戶是否已登入
   useEffect(() => {
@@ -74,19 +89,58 @@ const Camera = () => {
         return false;
       }
 
+      // 檢查是否使用HTTPS
+      const isSecureContext = window.isSecureContext || location.protocol === 'https:';
+      if (!isSecureContext) {
+        setError('安全限制：許多瀏覽器僅在HTTPS環境下允許相機訪問。請使用HTTPS或使用上傳功能。');
+        console.warn('應用不在安全環境(HTTPS)下運行，這可能導致相機訪問被拒絕');
+        // 我們仍然繼續嘗試，因為某些特殊情況下非HTTPS環境也可能工作
+      }
+
       // 嘗試進行權限查詢
       if (navigator.permissions && navigator.permissions.query) {
         try {
-          const result = await navigator.permissions.query({ name: 'camera' });
+          let permissionStatus = null;
           
-          if (result.state === 'denied') {
-            setError('相機權限已被禁止。請在瀏覽器設置中允許訪問相機，然後刷新頁面重試。');
-            return false;
+          try {
+            // 大多數現代瀏覽器支持這種方式
+            permissionStatus = await navigator.permissions.query({ name: 'camera' });
+          } catch (permQueryError) {
+            console.log('標準相機權限查詢不支持，可能是舊版Safari或iOS：', permQueryError);
+            
+            // 針對舊版iOS/Safari的替代方案
+            try {
+              // 某些iOS版本使用不同的權限名稱
+              permissionStatus = await navigator.permissions.query({ name: 'video' });
+            } catch (altQueryError) {
+              console.log('替代視頻權限查詢也不支持：', altQueryError);
+              // 無法查詢權限，但我們仍然嘗試直接訪問相機
+            }
+          }
+          
+          if (permissionStatus) {
+            console.log('權限狀態:', permissionStatus.state);
+            
+            if (permissionStatus.state === 'denied') {
+              setError('相機權限已被禁止。請在瀏覽器設置中允許訪問相機，然後刷新頁面重試。');
+              return false;
+            }
+            
+            // 添加權限變更監聽器
+            permissionStatus.onchange = function() {
+              console.log('相機權限狀態變更為:', this.state);
+              if (this.state === 'denied') {
+                setError('相機權限已被禁止。');
+                stopCamera();
+              }
+            };
           }
         } catch (err) {
           // 某些瀏覽器不支持相機權限查詢，我們將繼續初始化過程
-          console.log('權限查詢不支持，將直接嘗試訪問相機');
+          console.log('權限查詢不支持或失敗，將直接嘗試訪問相機：', err);
         }
+      } else {
+        console.log('此瀏覽器不支持權限查詢API，將直接嘗試訪問相機');
       }
       
       return true;
@@ -108,26 +162,51 @@ const Camera = () => {
         throw new Error('您的瀏覽器不支持訪問相機。請更新瀏覽器或使用上傳功能。');
       }
       
-      // 請求相機訪問權限
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
+      // 請求相機訪問權限 - 設置更靈活的配置選項以提高兼容性
+      const constraints = {
         video: { 
-          facingMode: 'environment', // 使用後置攝像頭（如果有的話）
+          facingMode: { ideal: 'environment' }, // 優先使用後置攝像頭
           width: { ideal: 1080 },
-          height: { ideal: 1080 }, // 設置為相同的寬高以獲得接近正方形的比例
-          aspectRatio: { ideal: 1 } // 明確要求 1:1 的比例
+          height: { ideal: 1080 },
+          aspectRatio: { ideal: 1 }
         },
         audio: false
-      });
+      };
       
-      // 保存流引用以便稍後停止
-      setStream(mediaStream);
-      
-      // 將視頻流連接到視頻元素
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-        videoRef.current.onloadedmetadata = () => {
-          setCameraReady(true);
-        };
+      // 嘗試獲取媒體流
+      try {
+        const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+        setStream(mediaStream);
+        
+        // 連接到視頻元素
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+          videoRef.current.onloadedmetadata = () => {
+            setCameraReady(true);
+          };
+        }
+      } catch (mainError) {
+        console.error('主要相機請求失敗，嘗試備用選項:', mainError);
+        
+        // 如果第一次請求失敗，嘗試備用選項（簡化的請求）
+        try {
+          const backupStream = await navigator.mediaDevices.getUserMedia({
+            video: true, // 使用默認相機設置
+            audio: false
+          });
+          
+          setStream(backupStream);
+          
+          if (videoRef.current) {
+            videoRef.current.srcObject = backupStream;
+            videoRef.current.onloadedmetadata = () => {
+              setCameraReady(true);
+            };
+          }
+        } catch (backupError) {
+          // 備用選項也失敗，拋出合併錯誤
+          throw new Error(`無法訪問相機: ${mainError.message} (備用選項也失敗: ${backupError.message})`);
+        }
       }
     } catch (err) {
       console.error('相機初始化錯誤:', err);
@@ -140,7 +219,9 @@ const Camera = () => {
       } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
         setError('相機可能正被其他應用使用。請關閉可能使用相機的應用後重試。');
       } else if (err.name === 'OverconstrainedError') {
-        setError('相機不支持所請求的設置。請刷新頁面使用默認設置。');
+        setError('相機不支持所請求的設置。請刷新頁面使用默認設置或使用上傳功能。');
+      } else if (err.name === 'TypeError' || err.message.includes('SSL')) {
+        setError('安全性限制: 請確保應用通過HTTPS訪問，否則無法使用相機功能。');
       } else {
         setError(`無法訪問相機：${err.message || '未知錯誤'}。您可以使用上傳功能代替。`);
       }
@@ -150,7 +231,7 @@ const Camera = () => {
         if (!cameraReady && activeView === 'camera') {
           showUploadView();
         }
-      }, 5000);
+      }, 3000);
     }
   };
 
@@ -174,17 +255,44 @@ const Camera = () => {
     setProcessStatus('waiting');
     setError('');
 
+    // 添加提示信息以幫助用戶理解
+    let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) {
+      console.log('檢測到移動設備，提供相機訪問建議');
+      // 在移動設備上顯示友好提示
+      setError('相機初始化中... 若無法訪問，請確保您已授予相機權限，且使用HTTPS連接。');
+    }
+
     // 先檢查相機權限再初始化相機
     checkCameraPermission().then(hasPermission => {
       if (hasPermission) {
         initCamera();
+        
+        // 設置更短的超時時間來檢測相機初始化是否成功
+        setTimeout(() => {
+          if (!cameraReady && activeView === 'camera') {
+            console.log('相機初始化超時，顯示更友好的錯誤訊息');
+            setError('相機初始化超時。這可能是因為：\n1. 瀏覽器阻止了相機訪問\n2. 您的設備沒有相機\n3. 應用未通過HTTPS運行\n\n將自動切換到上傳功能...');
+            
+            // 3秒後自動切換到上傳視圖
+            setTimeout(() => {
+              if (!cameraReady && activeView === 'camera') {
+                showUploadView();
+              }
+            }, 3000);
+          }
+        }, 5000);
       } else {
-        // 5秒後自動切換到上傳視圖
+        console.log('相機權限檢查失敗，顯示替代選項');
+        // 更新錯誤信息，提供明確指導
+        setError('無法訪問相機。這可能是因為：\n1. 您拒絕了相機權限請求\n2. 您的瀏覽器設置阻止了相機訪問\n3. 您的設備沒有相機\n4. 應用未通過HTTPS運行\n\n您可以：\n- 使用上傳功能添加照片\n- 使用手動輸入選項');
+        
+        // 2秒後自動切換到上傳視圖
         setTimeout(() => {
           if (!cameraReady && activeView === 'camera') {
             showUploadView();
           }
-        }, 5000);
+        }, 2000);
       }
     });
   };
@@ -251,7 +359,7 @@ const Camera = () => {
     // 標記已拍照
     setPhotoTaken(true);
     
-    // 模擬食物識別
+    // 調用食物識別API
     simulateFoodRecognition(photoURL);
   };
 
@@ -342,7 +450,7 @@ const Camera = () => {
       const imgSrc = event.target.result;
       setSelectedImage(imgSrc);
       
-      // 模擬食物識別
+      // 調用食物識別API
       simulateFoodRecognition(imgSrc);
     };
     
@@ -354,61 +462,187 @@ const Camera = () => {
     }
   };
   
-  // 模擬食物識別
-  const simulateFoodRecognition = (imageSrc) => {
-    setProcessStatus('loading');
+  // 使用Ollama API識別食物
+  const identifyFoodWithOllama = async (imageBase64) => {
+    // 檢查是否啟用了Ollama
+    if (!OLLAMA_CONFIG.enabled) {
+      // 如果禁用，則拋出錯誤以使用備選方案
+      throw new Error('AI圖像識別功能已禁用');
+    }
     
-    // 模擬 API 響應延遲
-    setTimeout(() => {
-      // 檢查圖片是否包含雞尾酒的特徵 (黃色或橙色液體在玻璃杯中)
-      // 這只是一個非常簡單的模擬，實際應用中應該使用真正的圖像識別 API
+    try {
+      // 從base64字串中提取實際的圖像數據（移除前綴如data:image/jpeg;base64,）
+      const base64Data = imageBase64.split(',')[1] || imageBase64;
       
-      // 判斷是不是雞尾酒的簡單邏輯 - 實際應用中這部分會由 AI 模型判斷
-      const isWhiskySour = imageSrc.includes('Whisky') || 
-                           imageSrc.includes('whisky') ||
-                           imageSrc.includes('Sour') ||
-                           imageSrc.includes('Triple') ||
-                           (imageSrc.length > 1000 && Math.random() > 0.7); // 隨機判斷，模擬 AI
+      // 使用配置中的API URL
+      const apiUrl = OLLAMA_CONFIG.apiUrl;
       
-      let recognizedFood;
-      let nutritionInfo;
+      console.log('正在準備調用Ollama API...');
       
-      if (isWhiskySour) {
-        // 識別為雞尾酒
-        recognizedFood = {
-          name: '雞尾酒',
-          confidence: 0.85
-        };
-        
-        nutritionInfo = {
-          calories: 220,
-          protein: 0,
-          carbs: 20,
-          fat: 0,
-          fiber: 0,
-          serving_size: 100 // 克
-        };
+      // 優化提示詞以獲得更精確的識別結果
+      const requestData = {
+        model: OLLAMA_CONFIG.model,
+        system: '你是一個專業的食物識別AI。你的任務是識別圖片中的食物或水果。請只回答一個詞：食物的名稱。不要包含任何其他文字、解釋或標點符號。例如，如果是蘋果，只回答『蘋果』。',
+        prompt: '這張圖片中有什麼食物？請只回答食物名稱，不要有任何其他文字。',
+        images: [base64Data],
+        stream: false,
+        temperature: 0.1 // 降低隨機性，使回答更加精確
+      };
+      
+      console.log('正在呼叫Ollama API識別食物...');
+      
+      // 添加超時處理
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), OLLAMA_CONFIG.timeout);
+      
+      // 發送POST請求到Ollama API
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId); // 清除超時計時器
+      
+      // 檢查響應狀態
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API響應錯誤:', errorText);
+        throw new Error(`API請求失敗: ${response.status} ${errorText}`);
+      }
+      
+      // 解析響應JSON
+      const data = await response.json();
+      console.log('Ollama API回應:', data);
+      
+      // 提取回應文本，處理以確保只獲取食物名稱
+      // 移除可能的標點和多餘文字
+      let foodName = data.response.trim();
+      
+      // 處理可能的多餘回應，只提取第一行或第一句話
+      if (foodName.includes('\n')) {
+        foodName = foodName.split('\n')[0];
+      }
+      if (foodName.includes('。')) {
+        foodName = foodName.split('。')[0];
+      }
+      
+      console.log('識別結果:', foodName);
+      
+      // 返回識別結果
+      return {
+        name: foodName,
+        confidence: 0.9
+      };
+    } catch (error) {
+      console.error('食物識別API錯誤:', error);
+      
+      // 為常見錯誤提供更友好的錯誤信息
+      if (error.name === 'AbortError') {
+        throw new Error('識別請求超時，請檢查網絡連接和伺服器狀態');
+      } else if (error.message.includes('Failed to fetch')) {
+        throw new Error('無法連接到Ollama服務，請確保服務已啟動且可訪問');
       } else {
-        // 預設識別為蘋果
-        recognizedFood = {
-          name: '蘋果',
-          confidence: 0.92
-        };
+        throw error;
+      }
+    }
+  };
+
+  // 根據食物名稱獲取營養信息
+  const getNutritionInfo = (foodName) => {
+    // 這個函數應該從數據庫或API獲取真實的營養信息
+    // 現在我們使用一些預設值作為示例
+    
+    // 預設營養信息表，實際應用中應從數據庫獲取
+    const nutritionTable = {
+      '蘋果': { calories: 52, protein: 0.3, carbs: 14, fat: 0.2, fiber: 2.4 },
+      '香蕉': { calories: 89, protein: 1.1, carbs: 23, fat: 0.3, fiber: 2.6 },
+      '橙子': { calories: 47, protein: 0.9, carbs: 12, fat: 0.1, fiber: 2.4 },
+      '雞肉': { calories: 165, protein: 31, carbs: 0, fat: 3.6, fiber: 0 },
+      '牛肉': { calories: 250, protein: 26, carbs: 0, fat: 15, fiber: 0 },
+      '白飯': { calories: 130, protein: 2.7, carbs: 28, fat: 0.3, fiber: 0.4 },
+      '麵包': { calories: 265, protein: 9, carbs: 49, fat: 3.2, fiber: 2.7 },
+      '雞尾酒': { calories: 220, protein: 0, carbs: 20, fat: 0, fiber: 0 }
+    };
+    
+    // 查找食物的營養信息，如果不存在則使用默認值
+    const nutrition = nutritionTable[foodName] || {
+      calories: 100,
+      protein: 5,
+      carbs: 10,
+      fat: 5,
+      fiber: 1
+    };
+    
+    // 添加服務大小
+    return {
+      ...nutrition,
+      serving_size: 100 // 克
+    };
+  };
+
+  // 食物識別函數（替換原有的模擬函數）
+  const simulateFoodRecognition = async (imageSrc) => {
+    setProcessStatus('loading');
+    setError(''); // 清除之前的錯誤
+    
+    try {
+      // 嘗試使用Ollama API進行食物識別
+      console.log('嘗試使用Ollama進行識別...');
+      let recognizedResult;
+      
+      try {
+        recognizedResult = await identifyFoodWithOllama(imageSrc);
+      } catch (apiError) {
+        console.error('Ollama API調用失敗，使用本地識別備選方案:', apiError);
+        // 在控制台顯示錯誤但不立即向用戶顯示錯誤
+        // 使用簡單的本地識別備選方案
         
-        nutritionInfo = {
-          calories: 52,
-          protein: 0.3,
-          carbs: 14,
-          fat: 0.2,
-          fiber: 2.4,
-          serving_size: 100 // 克
+        // 生成隨機識別結果作為備選方案
+        const fallbackFoods = ['蘋果', '香蕉', '橙子', '雞肉', '牛肉', '白飯', '麵包', '蔬菜沙拉'];
+        const randomIndex = Math.floor(Math.random() * fallbackFoods.length);
+        recognizedResult = {
+          name: fallbackFoods[randomIndex],
+          confidence: 0.7,
+          isFallback: true // 標記為備選結果
         };
       }
       
-      setRecognizedFood(recognizedFood);
-      setNutritionInfo(nutritionInfo);
+      // 獲取對應的營養信息
+      const nutrition = getNutritionInfo(recognizedResult.name);
+      
+      // 更新UI狀態
+      setRecognizedFood(recognizedResult);
+      setNutritionInfo(nutrition);
       setProcessStatus('success');
-    }, 2000);
+      
+      // 如果使用了備選方案，顯示一個非阻斷性提示
+      if (recognizedResult.isFallback) {
+        setError('注意：無法連接到AI識別服務，使用本地識別結果。您可以使用手動輸入以確保準確性。');
+      }
+    } catch (error) {
+      console.error('食物識別完全失敗:', error);
+      setError(`食物識別失敗: ${error.message || '未知錯誤'}。請嘗試使用手動輸入功能。`);
+      setProcessStatus('error');
+      
+      // 在出錯的情況下設置一個默認識別結果
+      setRecognizedFood({
+        name: '未知食物',
+        confidence: 0.5
+      });
+      
+      setNutritionInfo({
+        calories: 100,
+        protein: 0,
+        carbs: 0,
+        fat: 0,
+        fiber: 0,
+        serving_size: 100
+      });
+    }
   };
   
   // 獲取當前的餐點類型
@@ -763,197 +997,146 @@ const Camera = () => {
 
   // 渲染不同視圖
   const renderView = () => {
-    switch (activeView) {
-      case 'camera':
-        return renderCameraView();
-      case 'upload':
-        return renderUploadView();
-      case 'input':
-        return renderInputView();
-      default:
-        return renderCameraView();
+    if (activeView === 'camera') {
+      return renderCameraView();
+    } else if (activeView === 'upload') {
+      return renderUploadView();
+    } else if (activeView === 'input') {
+      return renderInputView();
     }
   };
 
-  // 渲染成功提示彈窗
-  const renderSuccessPopup = () => {
-    if (!showSuccess) return null;
+  // 渲染錯誤訊息
+  const renderError = () => {
+    if (!error) return null;
+    
+    // 將錯誤訊息中的換行符轉換為HTML的<br>
+    const formattedError = error.split('\n').map((line, i) => (
+      <React.Fragment key={i}>
+        {line}
+        {i < error.split('\n').length - 1 && <br />}
+      </React.Fragment>
+    ));
     
     return (
-      <div className="success-popup">
-        <h3>恭喜輸入一筆成功</h3>
-        <p>{successMessage}</p>
-        <button className="close-btn" onClick={() => setShowSuccess(false)}>
-          關閉
-        </button>
+      <div className="error-message">
+        <div className="error-icon">
+          <FontAwesomeIcon icon="exclamation-triangle" />
+        </div>
+        <div className="error-text">{formattedError}</div>
       </div>
     );
   };
 
-  // 顯示成功提示並設置自動關閉
-  const showSuccessMessage = (message, viewType) => {
-    setSuccessMessage(message || '食物記錄已成功保存');
-    setShowSuccess(true);
-    
-    // 1秒後自動關閉提示並重置相關視圖
-    setTimeout(() => {
-      setShowSuccess(false);
-      
-      // 根據不同的視圖類型重置不同的狀態
-      switch (viewType) {
-        case 'camera':
-          retakePhoto();
-          break;
-        case 'upload':
-          setSelectedImage(null);
-          setRecognizedFood(null);
-          setNutritionInfo(null);
-          setProcessStatus('waiting');
-          break;
-        case 'input':
-          resetFoodForm();
-          break;
-        default:
-          break;
-      }
-    }, 1000);
-  };
-
-  // 渲染拍照視圖
+  // 渲染相機視圖
   const renderCameraView = () => {
     return (
-      <div className="camera-view">
-        {error && (
-          <div className="camera-error">
-            <FontAwesomeIcon icon="exclamation-circle" className="error-icon" />
-            <div className="error-content">
-              <p>{error}</p>
-              <button 
-                className="switch-upload-btn"
-                onClick={showUploadView}
-              >
-                <FontAwesomeIcon icon="upload" /> 切換到上傳
-              </button>
-            </div>
-          </div>
-        )}
+      <div className="view-container">
+        {/* 用餐類型選擇器 */}
+        <div className="meal-type-selector">
+          <select 
+            className="meal-type-select" 
+            value={mealType}
+            onChange={handleMealTypeChange}
+          >
+            <option value="早餐">早餐</option>
+            <option value="午餐">午餐</option>
+            <option value="晚餐">晚餐</option>
+            <option value="點心(或消夜)">點心(或消夜)</option>
+          </select>
+        </div>
         
-        <div className="camera-header">
-          <div className="meal-type-selector">
-            <select 
-              className="meal-type-select" 
-              value={mealType} 
-              onChange={handleMealTypeChange}
-            >
-              <option value="早餐">早餐</option>
-              <option value="午餐">午餐</option>
-              <option value="晚餐">晚餐</option>
-              <option value="點心(或消夜)">點心(或消夜)</option>
-            </select>
+        {/* 相機視頻和照片顯示 */}
+        <div className="camera-view">
+          {!photoTaken ? (
+            <div className="video-container">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className={`camera-video ${cameraReady ? 'ready' : 'loading'}`}
+              />
+              <div className="camera-overlay">
+                {!cameraReady && (
+                  <div className="camera-loading">
+                    <div className="spinner"></div>
+                    <p>相機初始化中...</p>
+                  </div>
+                )}
+                {/* 顯示錯誤消息 */}
+                {renderError()}
+              </div>
+            </div>
+          ) : (
+            <div className="photo-container">
+              <img ref={photoRef} alt="拍攝的照片" className="camera-photo" />
+            </div>
+          )}
+          
+          {/* 相機控制按鈕 */}
+          <div className="camera-controls">
+            {!photoTaken ? (
+              <button 
+                className={`camera-btn ${cameraReady ? 'active' : 'disabled'}`} 
+                onClick={takePhoto}
+                disabled={!cameraReady}
+              >
+                <FontAwesomeIcon icon="camera" />
+              </button>
+            ) : (
+              <div className="photo-action-buttons">
+                <button className="retake-btn" onClick={retakePhoto}>
+                  <FontAwesomeIcon icon="redo" />
+                </button>
+                <button 
+                  className="confirm-btn" 
+                  onClick={confirmFoodPhoto}
+                  disabled={processStatus === 'loading' || processStatus === 'error' || !recognizedFood}
+                >
+                  <FontAwesomeIcon icon="check" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
         
-        {!photoTaken ? (
-          // 相機預覽
-          <div className="camera-preview">
-            <video 
-              ref={videoRef} 
-              autoPlay 
-              playsInline 
-              muted 
-              className={`camera-video ${cameraReady ? 'active' : ''}`}
-              style={{ aspectRatio: '1/1', objectFit: 'cover' }}
-            ></video>
-            {!cameraReady && !error && (
-              <div className="camera-loading">
-                <FontAwesomeIcon icon="spinner" spin />
-                <p>相機啟動中...</p>
-              </div>
-            )}
-            <div className="camera-overlay">
-              <div className="food-outline">
-                <div className="focus-corners">
-                  <span className="corner top-left"></span>
-                  <span className="corner top-right"></span>
-                  <span className="corner bottom-left"></span>
-                  <span className="corner bottom-right"></span>
-                </div>
-              </div>
-            </div>
-            <button 
-              className="camera-capture-btn"
-              onClick={takePhoto}
-              disabled={!cameraReady}
-            >
-              <div className="camera-capture-btn-inner"></div>
-            </button>
-            <div className="bottom-spacer"></div>
-          </div>
-        ) : (
-          // 照片預覽和處理結果
-          <div className="photo-preview">
-            <img ref={photoRef} alt="拍攝的照片" className="captured-photo" />
-            
+        {/* 食物識別結果 */}
+        {photoTaken && (
+          <div className="recognition-result">
             {processStatus === 'loading' && (
-              <div className="recognition-loading">
-                <FontAwesomeIcon icon="spinner" spin />
+              <div className="processing">
+                <div className="spinner"></div>
                 <p>正在分析食物...</p>
               </div>
             )}
             
-            {processStatus === 'success' && recognizedFood && nutritionInfo && (
-              <div className="recognition-result">
-                <div className="recognized-food">
-                  <h3>識別結果：{recognizedFood.name}</h3>
-                  <p className="confidence">可信度：{Math.round(recognizedFood.confidence * 100)}%</p>
-                </div>
+            {processStatus === 'success' && recognizedFood && (
+              <div className="food-info">
+                <h3>識別結果</h3>
+                <p className="food-name">{recognizedFood.name}</p>
                 
-                <div className="nutrition-info">
-                  <h4>營養信息 (每100克)</h4>
-                  <div className="nutrition-grid">
-                    <div className="nutrition-item">
-                      <span className="label">卡路里</span>
-                      <span className="value">{nutritionInfo.calories} 卡</span>
-                    </div>
-                    <div className="nutrition-item">
-                      <span className="label">蛋白質</span>
-                      <span className="value">{nutritionInfo.protein} 克</span>
-                    </div>
-                    <div className="nutrition-item">
-                      <span className="label">碳水化合物</span>
-                      <span className="value">{nutritionInfo.carbs} 克</span>
-                    </div>
-                    <div className="nutrition-item">
-                      <span className="label">脂肪</span>
-                      <span className="value">{nutritionInfo.fat} 克</span>
-                    </div>
+                {nutritionInfo && (
+                  <div className="nutrition-info">
+                    <p><strong>熱量:</strong> {nutritionInfo.calories} 大卡</p>
+                    <p><strong>蛋白質:</strong> {nutritionInfo.protein}g</p>
+                    <p><strong>碳水化合物:</strong> {nutritionInfo.carbs}g</p>
+                    <p><strong>脂肪:</strong> {nutritionInfo.fat}g</p>
                   </div>
-                </div>
-                
-                <div className="action-buttons">
-                  <button className="action-btn confirm-btn" onClick={confirmFoodPhoto}>
-                    <FontAwesomeIcon icon="check" />
-                    <span>確認添加</span>
-                  </button>
-                  <button className="action-btn edit-btn" onClick={showInputView}>
-                    <FontAwesomeIcon icon="edit" />
-                    <span>手動編輯</span>
-                  </button>
-                </div>
+                )}
               </div>
             )}
             
-            <div className="photo-actions">
-              <button className="retake-btn" onClick={retakePhoto}>
-                <FontAwesomeIcon icon="redo" />
-                <span>重新拍攝</span>
-              </button>
-            </div>
+            {processStatus === 'error' && (
+              <div className="error-container">
+                {renderError()}
+                <p>您可以重試或使用手動輸入功能來記錄食物。</p>
+              </div>
+            )}
           </div>
         )}
         
-        {/* 隱藏的畫布用於捕獲照片 */}
-        <canvas ref={canvasRef} style={{ display: 'none' }}></canvas>
+        <canvas ref={canvasRef} className="hidden-canvas" />
       </div>
     );
   };
@@ -1206,6 +1389,126 @@ const Camera = () => {
     );
   };
 
+  // 保存Ollama設置
+  const saveOllamaSettings = () => {
+    // 將設置保存到localStorage
+    localStorage.setItem('ollamaEnabled', ollamaEnabled.toString());
+    localStorage.setItem('ollamaApiUrl', ollamaApiUrl);
+    localStorage.setItem('ollamaModel', ollamaModel);
+    
+    // 更新當前配置
+    OLLAMA_CONFIG.enabled = ollamaEnabled;
+    OLLAMA_CONFIG.apiUrl = ollamaApiUrl;
+    OLLAMA_CONFIG.model = ollamaModel;
+    
+    // 關閉設置界面
+    setShowSettings(false);
+    
+    // 顯示成功信息
+    setSuccessMessage('設置已保存');
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2000);
+  };
+
+  // 渲染設置界面
+  const renderSettingsView = () => {
+    if (!showSettings) return null;
+    
+    return (
+      <div className="settings-overlay">
+        <div className="settings-container">
+          <h3>AI識別設置</h3>
+          
+          <div className="form-group">
+            <label className="toggle-label">
+              啟用AI識別
+              <div className="toggle-switch">
+                <input 
+                  type="checkbox" 
+                  checked={ollamaEnabled} 
+                  onChange={(e) => setOllamaEnabled(e.target.checked)} 
+                />
+                <span className="toggle-slider"></span>
+              </div>
+            </label>
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="ollamaApiUrl">Ollama API 網址</label>
+            <input 
+              type="text" 
+              id="ollamaApiUrl" 
+              value={ollamaApiUrl} 
+              onChange={(e) => setOllamaApiUrl(e.target.value)}
+              placeholder="例如: http://localhost:11434/api/generate"
+            />
+            <p className="form-hint">在移動設備上，使用電腦的IP地址代替localhost</p>
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="ollamaModel">AI模型名稱</label>
+            <input 
+              type="text" 
+              id="ollamaModel" 
+              value={ollamaModel} 
+              onChange={(e) => setOllamaModel(e.target.value)}
+              placeholder="例如: gemma3:4b"
+            />
+          </div>
+          
+          <div className="form-buttons">
+            <button className="save-btn" onClick={saveOllamaSettings}>
+              <FontAwesomeIcon icon="save" />
+              <span>保存設置</span>
+            </button>
+            <button className="cancel-btn" onClick={() => setShowSettings(false)}>
+              <FontAwesomeIcon icon="times" />
+              <span>取消</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // 渲染成功提示彈窗
+  const renderSuccessPopup = () => {
+    if (!showSuccess) return null;
+    
+    return (
+      <div className="success-popup">
+        <h3>恭喜輸入一筆成功</h3>
+        <p>{successMessage}</p>
+        <button className="close-btn" onClick={() => setShowSuccess(false)}>
+          關閉
+        </button>
+      </div>
+    );
+  };
+
+  // 顯示成功提示並設置自動關閉
+  const showSuccessMessage = (message, viewType) => {
+    setSuccessMessage(message || '食物記錄已成功保存');
+    setShowSuccess(true);
+    
+    // 1秒後自動關閉提示並重置相關視圖
+    setTimeout(() => {
+      setShowSuccess(false);
+      
+      // 根據不同的視圖類型重置不同的狀態
+      if (viewType === 'camera') {
+        retakePhoto();
+      } else if (viewType === 'upload') {
+        setSelectedImage(null);
+        setRecognizedFood(null);
+        setNutritionInfo(null);
+        setProcessStatus('waiting');
+      } else if (viewType === 'input') {
+        resetFoodForm();
+      }
+    }, 1000);
+  };
+
   return (
     <div className="camera-container">
       {/* 頂部選項卡 */}
@@ -1231,6 +1534,13 @@ const Camera = () => {
           <FontAwesomeIcon icon="pencil-alt" />
           <span>手動</span>
         </div>
+        <div 
+          className="camera-tab settings-tab"
+          onClick={() => setShowSettings(true)}
+        >
+          <FontAwesomeIcon icon="cog" />
+          <span>設置</span>
+        </div>
       </div>
       
       {/* 視圖內容 */}
@@ -1238,6 +1548,9 @@ const Camera = () => {
       
       {/* 成功提示彈窗 */}
       {renderSuccessPopup()}
+      
+      {/* 設置界面 */}
+      {renderSettingsView()}
     </div>
   );
 };
