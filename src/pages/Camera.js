@@ -6,15 +6,6 @@ import database from '../utils/database';
 import initializeDatabase from '../utils/initDb';
 import '../styles/Camera.css';
 
-// Ollama API 配置
-const OLLAMA_CONFIG = {
-  // 預設使用localhost，可以根據實際環境修改
-  apiUrl: localStorage.getItem('ollamaApiUrl') || 'http://localhost:11434/api/generate',
-  model: localStorage.getItem('ollamaModel') || 'gemma3:4b',
-  enabled: localStorage.getItem('ollamaEnabled') !== 'false', // 預設啟用，可以禁用
-  timeout: parseInt(localStorage.getItem('ollamaTimeout') || '30000', 10), // 30秒超時
-};
-
 const Camera = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -51,13 +42,7 @@ const Camera = () => {
   const [quantity, setQuantity] = useState('1');
   const [suggestedFoods, setSuggestedFoods] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
-  
-  // Ollama設置相關狀態
-  const [showSettings, setShowSettings] = useState(false);
-  const [ollamaEnabled, setOllamaEnabled] = useState(OLLAMA_CONFIG.enabled);
-  const [ollamaApiUrl, setOllamaApiUrl] = useState(OLLAMA_CONFIG.apiUrl);
-  const [ollamaModel, setOllamaModel] = useState(OLLAMA_CONFIG.model);
+  const [isSearching, setIsSearching] = useState(false);  
 
   // 檢查用戶是否已登入
   useEffect(() => {
@@ -462,97 +447,25 @@ const Camera = () => {
     }
   };
   
-  // 使用Ollama API識別食物
-  const identifyFoodWithOllama = async (imageBase64) => {
-    // 檢查是否啟用了Ollama
-    if (!OLLAMA_CONFIG.enabled) {
-      // 如果禁用，則拋出錯誤以使用備選方案
-      throw new Error('AI圖像識別功能已禁用');
-    }
-    
-    try {
-      // 從base64字串中提取實際的圖像數據（移除前綴如data:image/jpeg;base64,）
-      const base64Data = imageBase64.split(',')[1] || imageBase64;
-      
-      // 使用配置中的API URL
-      const apiUrl = OLLAMA_CONFIG.apiUrl;
-      
-      console.log('正在準備調用Ollama API...');
-      
-      // 優化提示詞以獲得更精確的識別結果
-      const requestData = {
-        model: OLLAMA_CONFIG.model,
-        system: '你是一個專業的食物識別AI。你的任務是識別圖片中的食物或水果。請只回答一個詞：食物的名稱。不要包含任何其他文字、解釋或標點符號。例如，如果是蘋果，只回答『蘋果』。',
-        prompt: '這張圖片中有什麼食物？請只回答食物名稱，不要有任何其他文字。',
-        images: [base64Data],
-        stream: false,
-        temperature: 0.1 // 降低隨機性，使回答更加精確
-      };
-      
-      console.log('正在呼叫Ollama API識別食物...');
-      
-      // 添加超時處理
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), OLLAMA_CONFIG.timeout);
-      
-      // 發送POST請求到Ollama API
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData),
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId); // 清除超時計時器
-      
-      // 檢查響應狀態
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API響應錯誤:', errorText);
-        throw new Error(`API請求失敗: ${response.status} ${errorText}`);
-      }
-      
-      // 解析響應JSON
-      const data = await response.json();
-      console.log('Ollama API回應:', data);
-      
-      // 提取回應文本，處理以確保只獲取食物名稱
-      // 移除可能的標點和多餘文字
-      let foodName = data.response.trim();
-      
-      // 處理可能的多餘回應，只提取第一行或第一句話
-      if (foodName.includes('\n')) {
-        foodName = foodName.split('\n')[0];
-      }
-      if (foodName.includes('。')) {
-        foodName = foodName.split('。')[0];
-      }
-      
-      console.log('識別結果:', foodName);
-      
-      // 返回識別結果
-      return {
-        name: foodName,
-        confidence: 0.9
-      };
-    } catch (error) {
-      console.error('食物識別API錯誤:', error);
-      
-      // 為常見錯誤提供更友好的錯誤信息
-      if (error.name === 'AbortError') {
-        throw new Error('識別請求超時，請檢查網絡連接和伺服器狀態');
-      } else if (error.message.includes('Failed to fetch')) {
-        throw new Error('無法連接到Ollama服務，請確保服務已啟動且可訪問');
-      } else {
-        throw error;
-      }
-    }
+  // 空的 identifyFoodWithGemini 函數
+  const identifyFoodWithGemini = async (imageBase64) => {
+    // TODO: 在這裡實現與 Gemini API 的交互邏輯
+    // 目前只返回一個預設的結果
+    return {
+      name: 'Unknown',
+      confidence: 0.5
+    };
+  };
+
+  const handleGeminiError = (error) => {
+    // TODO: 在這裡實現 Gemini API 錯誤處理邏輯
+    console.error('Gemini API Error:', error);
+    setError(`Gemini API 辨識失敗: ${error.message || '未知錯誤'}. 請嘗試使用手動輸入功能。`);
   };
 
   // 根據食物名稱獲取營養信息
   const getNutritionInfo = (foodName) => {
+    // TODO: 修改此函數以處理從 Gemini API 返回的實際營養數據
     // 這個函數應該從數據庫或API獲取真實的營養信息
     // 現在我們使用一些預設值作為示例
     
@@ -573,7 +486,7 @@ const Camera = () => {
       calories: 100,
       protein: 5,
       carbs: 10,
-      fat: 5,
+      fat: 5,      
       fiber: 1
     };
     
@@ -590,27 +503,18 @@ const Camera = () => {
     setError(''); // 清除之前的錯誤
     
     try {
-      // 嘗試使用Ollama API進行食物識別
-      console.log('嘗試使用Ollama進行識別...');
-      let recognizedResult;
+        const recognizedResult = await identifyFoodWithGemini(imageSrc);
+        const nutrition = getNutritionInfo(recognizedResult.name);
+        setRecognizedFood(recognizedResult);
+        setNutritionInfo(nutrition);
+        setProcessStatus('success');
+    } catch (error) {
+        handleGeminiError(error)
+        setProcessStatus('error');
       
-      try {
-        recognizedResult = await identifyFoodWithOllama(imageSrc);
-      } catch (apiError) {
-        console.error('Ollama API調用失敗，使用本地識別備選方案:', apiError);
-        // 在控制台顯示錯誤但不立即向用戶顯示錯誤
-        // 使用簡單的本地識別備選方案
-        
-        // 生成隨機識別結果作為備選方案
-        const fallbackFoods = ['蘋果', '香蕉', '橙子', '雞肉', '牛肉', '白飯', '麵包', '蔬菜沙拉'];
-        const randomIndex = Math.floor(Math.random() * fallbackFoods.length);
-        recognizedResult = {
-          name: fallbackFoods[randomIndex],
-          confidence: 0.7,
-          isFallback: true // 標記為備選結果
-        };
-      }
-      
+        setRecognizedFood({ name: '未知食物', confidence: 0.5 });
+        setNutritionInfo({ calories: 100, protein: 0, carbs: 0, fat: 0, fiber: 0, serving_size: 100 });
+    }
       // 獲取對應的營養信息
       const nutrition = getNutritionInfo(recognizedResult.name);
       
@@ -618,30 +522,10 @@ const Camera = () => {
       setRecognizedFood(recognizedResult);
       setNutritionInfo(nutrition);
       setProcessStatus('success');
-      
-      // 如果使用了備選方案，顯示一個非阻斷性提示
-      if (recognizedResult.isFallback) {
-        setError('注意：無法連接到AI識別服務，使用本地識別結果。您可以使用手動輸入以確保準確性。');
-      }
-    } catch (error) {
-      console.error('食物識別完全失敗:', error);
-      setError(`食物識別失敗: ${error.message || '未知錯誤'}。請嘗試使用手動輸入功能。`);
-      setProcessStatus('error');
-      
-      // 在出錯的情況下設置一個默認識別結果
-      setRecognizedFood({
-        name: '未知食物',
-        confidence: 0.5
-      });
-      
-      setNutritionInfo({
-        calories: 100,
-        protein: 0,
-        carbs: 0,
-        fat: 0,
-        fiber: 0,
-        serving_size: 100
-      });
+    catch (error) {
+        console.error('Gemini API Error:', error);
+        setError(`無法連接到 Gemini API 或 Gemini API 辨識失敗. 請嘗試使用手動輸入功能。`);
+        setProcessStatus('error');
     }
   };
   
@@ -1389,88 +1273,6 @@ const Camera = () => {
     );
   };
 
-  // 保存Ollama設置
-  const saveOllamaSettings = () => {
-    // 將設置保存到localStorage
-    localStorage.setItem('ollamaEnabled', ollamaEnabled.toString());
-    localStorage.setItem('ollamaApiUrl', ollamaApiUrl);
-    localStorage.setItem('ollamaModel', ollamaModel);
-    
-    // 更新當前配置
-    OLLAMA_CONFIG.enabled = ollamaEnabled;
-    OLLAMA_CONFIG.apiUrl = ollamaApiUrl;
-    OLLAMA_CONFIG.model = ollamaModel;
-    
-    // 關閉設置界面
-    setShowSettings(false);
-    
-    // 顯示成功信息
-    setSuccessMessage('設置已保存');
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 2000);
-  };
-
-  // 渲染設置界面
-  const renderSettingsView = () => {
-    if (!showSettings) return null;
-    
-    return (
-      <div className="settings-overlay">
-        <div className="settings-container">
-          <h3>AI識別設置</h3>
-          
-          <div className="form-group">
-            <label className="toggle-label">
-              啟用AI識別
-              <div className="toggle-switch">
-                <input 
-                  type="checkbox" 
-                  checked={ollamaEnabled} 
-                  onChange={(e) => setOllamaEnabled(e.target.checked)} 
-                />
-                <span className="toggle-slider"></span>
-              </div>
-            </label>
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="ollamaApiUrl">Ollama API 網址</label>
-            <input 
-              type="text" 
-              id="ollamaApiUrl" 
-              value={ollamaApiUrl} 
-              onChange={(e) => setOllamaApiUrl(e.target.value)}
-              placeholder="例如: http://localhost:11434/api/generate"
-            />
-            <p className="form-hint">在移動設備上，使用電腦的IP地址代替localhost</p>
-          </div>
-          
-          <div className="form-group">
-            <label htmlFor="ollamaModel">AI模型名稱</label>
-            <input 
-              type="text" 
-              id="ollamaModel" 
-              value={ollamaModel} 
-              onChange={(e) => setOllamaModel(e.target.value)}
-              placeholder="例如: gemma3:4b"
-            />
-          </div>
-          
-          <div className="form-buttons">
-            <button className="save-btn" onClick={saveOllamaSettings}>
-              <FontAwesomeIcon icon="save" />
-              <span>保存設置</span>
-            </button>
-            <button className="cancel-btn" onClick={() => setShowSettings(false)}>
-              <FontAwesomeIcon icon="times" />
-              <span>取消</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   // 渲染成功提示彈窗
   const renderSuccessPopup = () => {
     if (!showSuccess) return null;
@@ -1534,13 +1336,6 @@ const Camera = () => {
           <FontAwesomeIcon icon="pencil-alt" />
           <span>手動</span>
         </div>
-        <div 
-          className="camera-tab settings-tab"
-          onClick={() => setShowSettings(true)}
-        >
-          <FontAwesomeIcon icon="cog" />
-          <span>設置</span>
-        </div>
       </div>
       
       {/* 視圖內容 */}
@@ -1548,9 +1343,6 @@ const Camera = () => {
       
       {/* 成功提示彈窗 */}
       {renderSuccessPopup()}
-      
-      {/* 設置界面 */}
-      {renderSettingsView()}
     </div>
   );
 };
